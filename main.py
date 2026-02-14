@@ -1,9 +1,9 @@
-# mainqt.py - Cleaned Version
+# mainqt.py - With Edit and Delete Functionality
 from PyQt6 import uic
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QTableWidgetItem, 
                              QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
                              QLineEdit, QComboBox, QPushButton, QMessageBox,
-                             QRadioButton, QButtonGroup, QCompleter)
+                             QRadioButton, QButtonGroup, QCompleter, QWidget)
 from PyQt6.QtCore import Qt
 import sys
 from database_manager import DatabaseManager
@@ -11,12 +11,15 @@ from models import StudentValidator
 
 
 class AddStudentDialog(QDialog):
-    """Dialog for adding a new student with program names dropdown"""
+    """Dialog for adding/editing a student with program names dropdown"""
     
-    def __init__(self, db_manager, parent=None):
+    def __init__(self, db_manager, parent=None, student_data=None):
         super().__init__(parent)
         self.db_manager = db_manager
-        self.setWindowTitle("Add New Student")
+        self.student_data = student_data  # For editing existing student
+        self.is_edit_mode = student_data is not None
+        
+        self.setWindowTitle("Edit Student" if self.is_edit_mode else "Add New Student")
         self.setModal(True)
         self.setMinimumWidth(500)
         
@@ -25,6 +28,10 @@ class AddStudentDialog(QDialog):
         
         # Setup UI
         self.setup_ui()
+        
+        # Pre-fill data if editing
+        if self.is_edit_mode:
+            self.populate_form()
         
         # Set focus to first input
         self.id_input.setFocus()
@@ -52,6 +59,12 @@ class AddStudentDialog(QDialog):
         id_layout.addWidget(QLabel("Student ID (YYYY-NNNN):*"))
         self.id_input = QLineEdit()
         self.id_input.setPlaceholderText("2024-0001")
+        
+        # Disable ID field when editing
+        if self.is_edit_mode:
+            self.id_input.setReadOnly(True)
+            self.id_input.setStyleSheet("background-color: #f0f0f0;")
+        
         id_layout.addWidget(self.id_input)
         layout.addLayout(id_layout)
     
@@ -129,7 +142,8 @@ class AddStudentDialog(QDialog):
         """Create dialog buttons"""
         button_layout = QHBoxLayout()
         
-        self.save_button = QPushButton("Save Student")
+        save_text = "Update Student" if self.is_edit_mode else "Save Student"
+        self.save_button = QPushButton(save_text)
         self.save_button.clicked.connect(self.save_student)
         self.save_button.setDefault(True)
         button_layout.addWidget(self.save_button)
@@ -139,6 +153,33 @@ class AddStudentDialog(QDialog):
         button_layout.addWidget(self.cancel_button)
         
         layout.addLayout(button_layout)
+    
+    def populate_form(self):
+        """Pre-fill form with existing student data"""
+        if not self.student_data:
+            return
+        
+        self.id_input.setText(self.student_data['id'])
+        self.firstname_input.setText(self.student_data['firstname'])
+        self.lastname_input.setText(self.student_data['lastname'])
+        
+        # Set program - find matching display text
+        program_name = self.student_data.get('program_name', '')
+        for i in range(self.program_combo.count()):
+            if program_name in self.program_combo.itemText(i):
+                self.program_combo.setCurrentIndex(i)
+                break
+        
+        # Set year
+        year_index = self.year_combo.findText(self.student_data['year'])
+        if year_index >= 0:
+            self.year_combo.setCurrentIndex(year_index)
+        
+        # Set gender
+        if self.student_data['gender'] == 'Male':
+            self.male_radio.setChecked(True)
+        else:
+            self.female_radio.setChecked(True)
     
     def get_selected_program_code(self):
         """Extract program code from selected display text"""
@@ -221,8 +262,9 @@ class AddStudentDialog(QDialog):
         
         # Confirmation dialog
         program_display = self.program_combo.currentText()
+        action = "update" if self.is_edit_mode else "add"
         confirm_msg = (
-            f"Are you sure you want to add this student?\n\n"
+            f"Are you sure you want to {action} this student?\n\n"
             f"Student ID: {student_data['id']}\n"
             f"Name: {student_data['lastname']}, {student_data['firstname']}\n"
             f"Program: {program_display}\n"
@@ -231,12 +273,15 @@ class AddStudentDialog(QDialog):
         )
         
         reply = QMessageBox.question(
-            self, "Confirm Addition", confirm_msg,
+            self, f"Confirm {action.title()}", confirm_msg,
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
         
         if reply == QMessageBox.StandardButton.Yes:
-            success, message = self.db_manager.add_student(student_data)
+            if self.is_edit_mode:
+                success, message = self.db_manager.update_student(student_data)
+            else:
+                success, message = self.db_manager.add_student(student_data)
             
             if success:
                 QMessageBox.information(self, "Success", message)
@@ -268,6 +313,103 @@ class MainWindow(QMainWindow):
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self.load_students_table()
     
+    def open_edit_student_dialog(self, row):
+        """Open the Edit Student dialog with pre-filled data"""
+        # Get student data from the table row
+        student_data = {
+            'id': self.dataTableStudents.item(row, 0).text(),
+            'firstname': self.dataTableStudents.item(row, 1).text(),
+            'lastname': self.dataTableStudents.item(row, 2).text(),
+            'program_name': self.dataTableStudents.item(row, 3).text(),
+            'year': self.dataTableStudents.item(row, 5).text(),
+            'gender': self.dataTableStudents.item(row, 6).text()
+        }
+        
+        dialog = AddStudentDialog(self.db_manager, self, student_data)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.load_students_table()
+    
+    def delete_student(self, row):
+        """Delete student after confirmation"""
+        # Get student info
+        student_id = self.dataTableStudents.item(row, 0).text()
+        firstname = self.dataTableStudents.item(row, 1).text()
+        lastname = self.dataTableStudents.item(row, 2).text()
+        student_name = f"{firstname} {lastname}"
+        
+        # Confirmation dialog
+        reply = QMessageBox.question(
+            self,
+            'Delete Student',
+            f'Are you sure you want to delete student:\n\n'
+            f'{student_name} (ID: {student_id})?',
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            # Delete from database
+            success, message = self.db_manager.delete_student(student_id)
+            
+            if success:
+                # Reload table
+                self.load_students_table()
+                QMessageBox.information(self, "Success", message)
+            else:
+                QMessageBox.critical(self, "Error", message)
+    
+    def add_action_buttons(self, row):
+        """Add Edit and Delete buttons to a table row"""
+        # Create a widget to hold the buttons
+        button_widget = QWidget()
+        button_layout = QHBoxLayout()
+        button_layout.setContentsMargins(4, 2, 4, 2)
+        button_layout.setSpacing(4)
+        
+        # Edit button
+        edit_btn = QPushButton("✏️ Edit")
+        edit_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                padding: 5px 10px;
+                border-radius: 3px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+        """)
+        edit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        edit_btn.clicked.connect(lambda checked, r=row: self.open_edit_student_dialog(r))
+        
+        # Delete button
+        delete_btn = QPushButton("🗑️ Delete")
+        delete_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f44336;
+                color: white;
+                border: none;
+                padding: 5px 10px;
+                border-radius: 3px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #da190b;
+            }
+        """)
+        delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        delete_btn.clicked.connect(lambda checked, r=row: self.delete_student(r))
+        
+        # Add buttons to layout
+        button_layout.addWidget(edit_btn)
+        button_layout.addWidget(delete_btn)
+        button_widget.setLayout(button_layout)
+        
+        # Add to table (column 7 is the Actions column)
+        self.dataTableStudents.setCellWidget(row, 7, button_widget)
+    
     def load_students_table(self):
         """Load students from database into the table"""
         table = self.dataTableStudents
@@ -276,7 +418,7 @@ class MainWindow(QMainWindow):
         students = self.db_manager.get_students_with_details()
         table.setRowCount(len(students))
         
-        headers = ['ID', 'First Name', 'Last Name', 'Program', 'College', 'Year', 'Gender']
+        headers = ['ID', 'First Name', 'Last Name', 'Program', 'College', 'Year', 'Gender', 'Actions']
         table.setColumnCount(len(headers))
         table.setHorizontalHeaderLabels(headers)
         
@@ -288,6 +430,9 @@ class MainWindow(QMainWindow):
             table.setItem(row, 4, QTableWidgetItem(student.get('college_code', 'N/A')))
             table.setItem(row, 5, QTableWidgetItem(student['year']))
             table.setItem(row, 6, QTableWidgetItem(student['gender']))
+            
+            # Add action buttons to each row
+            self.add_action_buttons(row)
         
         table.resizeColumnsToContents()
 
