@@ -1,0 +1,21 @@
+# Virtual environments
+venv/
+new_venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE settings
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Duplicate CSV files in root (data folder is the source)
+/*.csv

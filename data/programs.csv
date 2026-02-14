@@ -1,0 +1,56 @@
+code,name,college
+BAELS,Bachelor of Arts in English Language Studies,CASS
+BALCS,Bachelor of Arts in Literary and Cultural Studies,CASS
+BAFIL,Bachelor of Arts in Filipino,CASS
+BAHIS,Bachelor of Arts in History,CASS
+BAPAN,Bachelor of Arts in Panitikan,CASS
+BAPOLSCI,Bachelor of Arts in Political Science,CASS
+BAPSYCH,Bachelor of Arts in Psychology,CASS
+BASOCIO,Bachelor of Arts in Sociology,CASS
+BAPHILO,Bachelor of Science in Philosophy Applied Ethics,CASS
+BSPSYCH,Bachelor of Science in Psychology,CASS
+BSCS,Bachelor of Science in Computer Science,CCS
+BSIS,Bachelor of Science in Information System,CCS
+BSIT,Bachelor of Science in Information Technology,CCS
+BSCA,Bachelor of Science in Computer Application,CCS
+BSA,Bachelor of Science in Accountancy,CEBA
+BSBA-MM,Bachelor of Science in Business Administration Major in Marketing Management,CEBA
+BSE,Bachelor of Science Major in Entrepreneurship,CEBA
+BSHM,Bachelor of Science in Hospitality Management,CEBA
+BEED-LE,Bachelor of Elementary Education Language Education,CED
+BSED-FIL,Bachelor of Secondary Education Filipino,CED
+BEED-SCIMAT,Bachelor of Elementary Education Science and Mathematics,CED
+BSED-BIO,Bachelor of Secondary Education Biology,CED
+BSED-CHEM,Bachelor of Secondary Education Chemistry,CED
+BSED-PHY,Bachelor of Secondary Education Physics,CED
+BSED-MAT,Bachelor of Secondary Education Mathematics,CED
+BPE,Bachelor of Physical Education,CED
+BTLED-HOMECO,Bachelor of Technology and Livelihood Education Major in Home Economics,CED
+BTVTED-DT,Bachelor of Technical-Vocational Teacher Education Major in Drafting Technology,CED
+BTLED-IA,Bachelor of Technology and Livelihood Education Major in Industrial Arts,CED
+BETCET,Bachelor of Engineering Technology in Civil Engineering Technology,COET
+BETCHET,Bachelor of Engineering Technology in Chemical Engineering Technology,COET
+BETELET,Bachelor of Engineering Technology in Electrical Engineering Technology,COET
+BETESET,Bachelor of Engineering Technology in Electronics Engineering Technology,COET
+BETMET,Bachelor of Engineering Technology in Mechanical Engineering Technology,COET
+BETMMT,Bachelor of Engineering Technology in Metallurgical and Material Engineering Technology,COET
+BSCE,Bachelor of Science in Civil Engineering,COET
+BSCERE,Bachelor of Science in Ceramics Engineering,COET
+BSCHE,Bachelor of Science in Chemical Engineering,COET
+BSCPE,Bachelor of Science in Computer Engineering,COET
+BSEE,Bachelor of Science in Electrical Engineering,COET
+BSEM,Bachelor of Science in Mining Engineering,COET
+BSENE,Bachelor of Science in Environmental Engineering,COET
+BSESE,Bachelor of Science in Electronics Engineering,COET
+BSIAM,Bachelor of Science in Industrial Automation and Mechatronics,COET
+BSME,Bachelor of Science in Mechanical Engineering,COET
+BSMETE,Bachelor of Science in Metallurgical Engineering,COET
+BSN,Bachelor of Science in Nursing,CHS
+BSBIO,Bachelor of Science in Biology,CSM
+BSBIO-BOT,Bachelor of Science in Biology Botany,CSM
+BSMB,Bachelor of Science in Marine Biology,CSM
+BSBIO-ANBIO,Bachelor of Science in Biology Animal Biology,CSM
+BSCHEM,Bachelor of Science in Chemistry,CSM
+BSPHY,Bachelor of Science in Physics,CSM
+BSMAT,Bachelor of Science in Mathematics,CSM
+BSSTAT,Bachelor of Science in Statistics,CSM
