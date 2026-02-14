@@ -306,6 +306,26 @@ class MainWindow(QMainWindow):
         self.programsButton.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
         self.collegesButton.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
         self.addStudentButton.clicked.connect(self.open_add_student_dialog)
+
+        # Connect sort dropdown
+        self.sortComboBox_2.currentTextChanged.connect(self.sort_students_by_dropdown)
+    
+    def sort_students_by_dropdown(self, sort_by):
+        """Sort students table based on dropdown selection"""
+        table = self.dataTableStudents
+    
+        # Map dropdown options to column indices
+        sort_mapping = {
+            'Program': 3,   # Program column
+            'Name': 2,      # Last Name column  
+            'ID': 0,        # ID column
+            'College': 4,    # College column
+            'Year' : 5      
+        }
+    
+        column = sort_mapping.get(sort_by)
+        if column is not None:
+            table.sortItems(column, Qt.SortOrder.AscendingOrder)
     
     def open_add_student_dialog(self):
         """Open the Add Student dialog"""
@@ -413,6 +433,7 @@ class MainWindow(QMainWindow):
     def load_students_table(self):
         """Load students from database into the table"""
         table = self.dataTableStudents
+        table.setSortingEnabled(False)
         table.setRowCount(0)
         
         students = self.db_manager.get_students_with_details()
@@ -435,6 +456,9 @@ class MainWindow(QMainWindow):
             self.add_action_buttons(row)
         
         table.resizeColumnsToContents()
+
+        """Enables sort function"""
+        table.setSortingEnabled(True)
 
 
 if __name__ == "__main__":

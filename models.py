@@ -23,7 +23,7 @@ class StudentValidator:
             return False, f"Year must be between 2000 and {current_year + 1}"
         
         return True, "Valid"
-    
+
     @staticmethod
     def validate_name(name, field_name):
         """Validate name fields"""
