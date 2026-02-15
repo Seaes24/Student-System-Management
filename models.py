@@ -23,7 +23,7 @@ class StudentValidator:
             return False, f"Year must be between 2000 and {current_year + 1}"
         
         return True, "Valid"
-
+    
     @staticmethod
     def validate_name(name, field_name):
         """Validate name fields"""
@@ -78,7 +78,40 @@ class CollegeValidator:
             return False, "College code is required"
         pattern = r'^[A-Z]{2,5}$'
         is_valid = bool(re.match(pattern, code))
-        return is_valid, "Valid" if is_valid else "Invalid format"
+        return is_valid, "Valid" if is_valid else "Invalid format (use 2-5 uppercase letters)"
+    
+    @staticmethod
+    def validate_college_name(name):
+        """Validate college name"""
+        if not name:
+            return False, "College name is required"
+        
+        if not name.strip():
+            return False, "College name cannot be empty"
+        
+        if len(name.strip()) < 3:
+            return False, "College name must be at least 3 characters long"
+        
+        return True, "Valid"
+    
+    @staticmethod
+    def check_duplicate_code(db_manager, code, current_id=None):
+        """
+        Check if college code already exists
+        current_id: When editing, exclude the current college from duplicate check
+        """
+        if current_id:
+            # Editing: check if another college has this code
+            query = "SELECT id FROM colleges WHERE code = ? AND id != ?"
+            result = db_manager.execute_query(query, (code, current_id))
+        else:
+            # Adding new: check if any college has this code
+            query = "SELECT id FROM colleges WHERE code = ?"
+            result = db_manager.execute_query(query, (code,))
+        
+        if result:
+            return False, f"College code '{code}' already exists"
+        return True, "Valid"
 
 
 class DataLookup:

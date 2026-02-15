@@ -101,13 +101,13 @@ class DatabaseManager:
         """
         Return all students with program names and college codes
         Used for displaying in the table
-        NOW USES CACHE! 🚀
+        NOW USES CACHE!
         """
         students = self.get_all_students()
         
-        # ✅ USE CACHE instead of reading files
-        programs = self.get_programs_cached()  # <-- CHANGED!
-        colleges = self.get_colleges_cached()  # <-- CHANGED!
+        # USE CACHE instead of reading files
+        programs = self.get_programs_cached() 
+        colleges = self.get_colleges_cached() 
         
         detailed_students = []
         for student in students:
@@ -326,7 +326,7 @@ class DatabaseManager:
     
     def get_college_by_code(self, code):
         """Get college by code - USES CACHE"""
-        colleges = self.get_colleges_cached()  # <-- CHANGED!
+        colleges = self.get_colleges_cached()
         for college in colleges:
             if college['code'] == code:
                 return college
@@ -340,8 +340,14 @@ class DatabaseManager:
     def add_college(self, college_data):
         """Add a new college - DON'T FORGET TO REFRESH CACHE!"""
         colleges = self.get_all_colleges()
-        colleges.append(college_data)
         
+        # Check for duplicate college code
+        for college in colleges: 
+            if college['code'] == college_data['code']: 
+                return False, f"College code {college_data['code']} already exists"  
+            
+        colleges.append(college_data)
+
         try:
             with open(self.colleges_file, 'w', newline='', encoding='utf-8') as f:
                 fieldnames = ['code', 'name']
@@ -349,9 +355,88 @@ class DatabaseManager:
                 writer.writeheader()
                 writer.writerows(colleges)
             
-            # ✅ REFRESH CACHE after adding
+            # REFRESH CACHE after adding
             self._refresh_cache()
             
             return True, f"College {college_data['code']} added successfully"
         except Exception as e:
             return False, f"Error saving college: {str(e)}"
+    
+    def update_college(self, college_data):
+        """Update an existing college"""
+
+        try:
+            colleges = self.get_all_colleges()
+            
+            if not colleges:
+                return False, "No colleges found in database"
+        
+            # Find and update
+            college_found = False
+            for i, college in enumerate(colleges):
+                if college['code'] == college_data['code']:
+                    colleges[i] = {
+                        'code': college_data['code'],
+                        'name': college_data['name']
+                    }
+                    college_found = True
+                    break
+        
+            if not college_found:
+                return False, f"College with code {college_data['code']} not found"
+        
+            # Write back to file
+            with open(self.colleges_file, 'w', newline='', encoding='utf-8') as f:
+                fieldnames = ['code', 'name']
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(colleges)
+            
+            # Refresh cache
+            self._refresh_cache()
+            
+            return True, f"College {college_data['name']} updated successfully!"
+        
+        except Exception as e:
+            return False, f"Error updating college: {str(e)}"
+
+    def delete_college(self, college_code):
+        """Delete a college from the database"""
+
+        try:
+            colleges = self.get_all_colleges()
+            
+            if not colleges:
+                return False, "No colleges found in database"
+            
+            # Find college name before deleting
+            college_name = None
+            original_count = len(colleges)
+            
+            for college in colleges:
+                if college['code'] == college_code:
+                    college_name = college['name']
+                    break
+            
+            # Filter out the college to delete
+            colleges = [c for c in colleges if c['code'] != college_code]
+            
+            if len(colleges) == original_count:
+                return False, f"College with code {college_code} not found"
+            
+            # Write back to file
+            with open(self.colleges_file, 'w', newline='', encoding='utf-8') as f:
+                fieldnames = ['code', 'name']
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                
+                if colleges:
+                    writer.writerows(colleges)
+            
+            # Refresh cache
+            self._refresh_cache()
+            
+            return True, f"College {college_name} (Code: {college_code}) deleted successfully!"
+        
+        except Exception as e:
+            return False, f"Error deleting college: {str(e)}"

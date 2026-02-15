@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QTableWidgetItem,
 from PyQt6.QtCore import Qt
 import sys
 from database_manager import DatabaseManager
-from models import StudentValidator
+from models import StudentValidator, CollegeValidator
 
 
 class AddStudentDialog(QDialog):
@@ -290,6 +290,153 @@ class AddStudentDialog(QDialog):
                 QMessageBox.critical(self, "Error", message)
 
 
+class AddCollegeDialog(QDialog):
+    """Dialog for adding/editing colleges"""
+    
+    def __init__(self, db_manager, parent=None, college_data=None):
+        super().__init__(parent)
+        self.db_manager = db_manager
+        self.college_data = college_data  # For editing existing colleges
+        self.is_edit_mode = college_data is not None
+        
+        self.setWindowTitle("Edit College" if self.is_edit_mode else "Add New College")
+        self.setModal(True)
+        self.setMinimumWidth(400)
+        
+        # Setup UI
+        self.setup_ui()
+        
+        # Pre-fill data if editing
+        if self.is_edit_mode:
+            self.populate_form()
+        
+        # Set focus to first input
+        self.collegename_input.setFocus()
+    
+    def setup_ui(self):
+        """Create and arrange all UI elements"""
+        layout = QVBoxLayout()
+        
+        # Form fields
+        self.create_collegename_field(layout)
+        self.create_collegecode_field(layout)
+        
+        layout.addSpacing(20)
+        self.create_buttons(layout)
+        
+        self.setLayout(layout)
+    
+    def create_collegename_field(self, layout):
+        """Create college name input field"""
+        collegename_layout = QHBoxLayout()
+        collegename_layout.addWidget(QLabel("College name:*"))
+        self.collegename_input = QLineEdit()
+        self.collegename_input.setPlaceholderText("College of Computer Studies")
+        collegename_layout.addWidget(self.collegename_input)
+        layout.addLayout(collegename_layout)
+        
+    def create_collegecode_field(self, layout):
+        """Create college code input field"""
+        collegecode_layout = QHBoxLayout()
+        collegecode_layout.addWidget(QLabel("College Code (2-5 letters):*"))
+        self.collegecode_input = QLineEdit()
+        self.collegecode_input.setPlaceholderText("CCS")
+        collegecode_layout.addWidget(self.collegecode_input)
+        layout.addLayout(collegecode_layout)
+    
+        # Disable college code field when editing
+        if self.is_edit_mode:
+            self.collegecode_input.setReadOnly(True)
+            self.collegecode_input.setStyleSheet("background-color: #f0f0f0;")
+    
+    def create_buttons(self, layout):
+        """Create dialog buttons"""
+        button_layout = QHBoxLayout()
+        
+        save_text = "Update College" if self.is_edit_mode else "Save College"
+        self.save_button = QPushButton(save_text)
+        self.save_button.clicked.connect(self.save_college)
+        self.save_button.setDefault(True)
+        button_layout.addWidget(self.save_button)
+        
+        self.cancel_button = QPushButton("Cancel")
+        self.cancel_button.clicked.connect(self.reject)
+        button_layout.addWidget(self.cancel_button)
+        
+        layout.addLayout(button_layout)
+    
+    def populate_form(self):
+        """Pre-fill form with existing college data"""
+        if not self.college_data:
+            return
+        
+        self.collegename_input.setText(self.college_data['name'])
+        self.collegecode_input.setText(self.college_data['code'])
+    
+    def validate_college_data(self, college_data):
+        """Validate all college data fields"""
+
+        # Validate college name
+        valid, message = CollegeValidator.validate_college_name(college_data['name'])
+        if not valid:
+            QMessageBox.warning(self, "Validation Error", message)
+            self.collegename_input.setFocus()
+            return False
+        
+        # Validate college code format
+        valid, message = CollegeValidator.validate_college_code(college_data['code'])
+        if not valid:
+            QMessageBox.warning(self, "Validation Error", message)
+            self.collegecode_input.setFocus()
+            return False
+        
+        return True
+    
+    def get_college_data(self):
+        """Collect data from form inputs"""
+        college_data = {
+            'code': self.collegecode_input.text().strip().upper(),
+            'name': self.collegename_input.text().strip()
+        }
+        
+        # Add ID if editing existing college
+        if self.is_edit_mode and self.college_data:
+            college_data['id'] = self.college_data.get('id')
+        
+        return college_data
+    
+    def save_college(self):
+        """Validate and save the college"""
+        college_data = self.get_college_data()
+        
+        if not self.validate_college_data(college_data):
+            return
+        
+        # Confirmation dialog
+        action = "update" if self.is_edit_mode else "add"
+        confirm_msg = (
+            f"Are you sure you want to {action} this college?\n\n"
+            f"College Code: {college_data['code']}\n"
+            f"College Name: {college_data['name']}"
+        )
+        
+        reply = QMessageBox.question(
+            self, f"Confirm {action.title()}", confirm_msg,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            if self.is_edit_mode:
+                success, message = self.db_manager.update_college(college_data)
+            else:
+                success, message = self.db_manager.add_college(college_data)
+            
+            if success:
+                QMessageBox.information(self, "Success", message)
+                self.accept()
+            else:
+                QMessageBox.critical(self, "Error", message)
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -299,6 +446,7 @@ class MainWindow(QMainWindow):
         
         self.connect_buttons()
         self.load_students_table()
+        self.load_colleges_table()
     
     def connect_buttons(self):
         """Connect UI buttons to their functions"""
@@ -306,6 +454,7 @@ class MainWindow(QMainWindow):
         self.programsButton.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
         self.collegesButton.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
         self.addStudentButton.clicked.connect(self.open_add_student_dialog)
+        self.addCollegeButton.clicked.connect(self.open_add_college_dialog)
 
         # Connect sort dropdown
         self.sortComboBox_2.currentTextChanged.connect(self.sort_students_by_dropdown)
@@ -459,6 +608,111 @@ class MainWindow(QMainWindow):
 
         """Enables sort function"""
         table.setSortingEnabled(True)
+
+    def open_add_college_dialog(self):
+        """Open the Add College dialog"""
+        dialog = AddCollegeDialog(self.db_manager, self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.load_colleges_table()
+
+    def load_colleges_table(self):
+        """Load colleges from database into the table"""
+        table = self.dataTableColleges
+        table.setSortingEnabled(False)
+        table.setRowCount(0)
+        
+        colleges = self.db_manager.get_all_colleges()
+        table.setRowCount(len(colleges))
+    
+        for row, college in enumerate(colleges):
+            table.setItem(row, 0, QTableWidgetItem(college['name']))
+            table.setItem(row, 1, QTableWidgetItem(college['code']))
+        
+            # Add action buttons to the Actions column (column index 2)
+            self.add_action_buttons_college(row, college)
+    
+        # Adjust column widths
+        table.resizeColumnsToContents()
+        table.horizontalHeader().setStretchLastSection(False)
+    
+        # Make Actions column fixed width
+        table.setColumnWidth(2, 150)
+    
+        # Enable sorting
+        table.setSortingEnabled(True)
+
+    def add_action_buttons_college(self, row, college):
+        """Add Edit and Delete buttons for each college row"""
+
+        button_widget = QWidget()
+        button_layout = QHBoxLayout(button_widget)
+        button_layout.setContentsMargins(4, 2, 4, 2)
+        button_layout.setSpacing(4)
+        
+        # Edit button
+        edit_btn = QPushButton("✏️ Edit")
+        edit_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                padding: 5px 10px;
+                border-radius: 3px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+        """)
+        edit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        edit_btn.clicked.connect(lambda checked, c=college: self.edit_college(c))
+        
+        # Delete button
+        delete_btn = QPushButton("🗑️ Delete")
+        delete_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f44336;
+                color: white;
+                border: none;
+                padding: 5px 10px;
+                border-radius: 3px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #da190b;
+            }
+        """)
+        delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        delete_btn.clicked.connect(lambda checked, c=college: self.delete_college(c))
+        
+        button_layout.addWidget(edit_btn)
+        button_layout.addWidget(delete_btn)
+        
+        self.dataTableColleges.setCellWidget(row, 2, button_widget)
+
+    def edit_college(self, college):
+        """Open dialog to edit college"""
+        dialog = AddCollegeDialog(self.db_manager, self, college_data=college)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.load_colleges_table()
+
+    def delete_college(self, college):
+        """Delete a college after confirmation"""
+        reply = QMessageBox.question(
+            self,
+            "Confirm Delete",
+            f"Are you sure you want to delete {college['name']} ({college['code']})?\n\n"
+            f"Warning: This may affect associated courses and students!",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            success, message = self.db_manager.delete_college(college['code'])
+            if success:
+                QMessageBox.information(self, "Success", message)
+                self.load_colleges_table()
+            else:
+                QMessageBox.critical(self, "Error", message)
 
 
 if __name__ == "__main__":
