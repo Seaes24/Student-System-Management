@@ -344,11 +344,6 @@ class AddCollegeDialog(QDialog):
         collegecode_layout.addWidget(self.collegecode_input)
         layout.addLayout(collegecode_layout)
     
-        # Disable college code field when editing
-        if self.is_edit_mode:
-            self.collegecode_input.setReadOnly(True)
-            self.collegecode_input.setStyleSheet("background-color: #f0f0f0;")
-    
     def create_buttons(self, layout):
         """Create dialog buttons"""
         button_layout = QHBoxLayout()
@@ -390,6 +385,26 @@ class AddCollegeDialog(QDialog):
             self.collegecode_input.setFocus()
             return False
         
+        #  Check for duplicate code when adding OR when changing code during edit
+        if not self.is_edit_mode:
+            # Adding new college - check if code exists
+            existing = self.db_manager.get_college_by_code(college_data['code'])
+            if existing:
+                QMessageBox.warning(self, "Duplicate Error", 
+                                f"College code '{college_data['code']}' already exists!")
+                self.collegecode_input.setFocus()
+                return False
+        else:
+            # Editing existing college - check if NEW code conflicts with OTHER colleges
+            if self.college_data['code'] != college_data['code']:
+                existing = self.db_manager.get_college_by_code(college_data['code'])
+                if existing:
+                    QMessageBox.warning(self, "Duplicate Error",
+                                    f"College code '{college_data['code']}' already exists!\n\n"
+                                    f"Cannot change code to one that's already in use.")
+                    self.collegecode_input.setFocus()
+                    return False
+        
         return True
     
     def get_college_data(self):
@@ -414,11 +429,21 @@ class AddCollegeDialog(QDialog):
         
         # Confirmation dialog
         action = "update" if self.is_edit_mode else "add"
-        confirm_msg = (
-            f"Are you sure you want to {action} this college?\n\n"
-            f"College Code: {college_data['code']}\n"
-            f"College Name: {college_data['name']}"
-        )
+        if self.is_edit_mode and self.college_data['code'] != college_data['code']:
+            confirm_msg = (
+                f"⚠️  You are changing the college code!\n\n"
+                f"Old Code: {self.college_data['code']}\n"
+                f"New Code: {college_data['code']}\n"
+                f"College Name: {college_data['name']}\n\n"
+                f"This will update ALL programs that reference this college.\n"
+                f"Are you sure you want to continue?"
+            )
+        else:
+            confirm_msg = (
+                f"Are you sure you want to {action} this college?\n\n"
+                f"College Code: {college_data['code']}\n"
+                f"College Name: {college_data['name']}"
+            )
         
         reply = QMessageBox.question(
             self, f"Confirm {action.title()}", confirm_msg,
@@ -427,7 +452,9 @@ class AddCollegeDialog(QDialog):
         
         if reply == QMessageBox.StandardButton.Yes:
             if self.is_edit_mode:
-                success, message = self.db_manager.update_college(college_data)
+                # ✅ Pass the ORIGINAL code for cascade update
+                old_code = self.college_data['code']
+                success, message = self.db_manager.update_college(college_data, old_code)
             else:
                 success, message = self.db_manager.add_college(college_data)
             
@@ -695,6 +722,7 @@ class MainWindow(QMainWindow):
         dialog = AddCollegeDialog(self.db_manager, self, college_data=college)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self.load_colleges_table()
+            self.load_students_table()
 
     def delete_college(self, college):
         """Delete a college after confirmation"""

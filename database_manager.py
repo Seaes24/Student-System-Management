@@ -362,30 +362,50 @@ class DatabaseManager:
         except Exception as e:
             return False, f"Error saving college: {str(e)}"
     
-    def update_college(self, college_data):
-        """Update an existing college"""
-
+    def update_college(self, college_data, old_code=None):
+        """Update an existing college and cascade changes to programs"""
+        
         try:
             colleges = self.get_all_colleges()
             
             if not colleges:
                 return False, "No colleges found in database"
-        
-            # Find and update
+            
+            search_code = old_code if old_code else college_data['code']
+            
+            # Find the college using the OLD code
             college_found = False
+            
             for i, college in enumerate(colleges):
-                if college['code'] == college_data['code']:
+                if college['code'] == search_code:  # ✅ Search with OLD code!
                     colleges[i] = {
-                        'code': college_data['code'],
+                        'code': college_data['code'],  # Update to NEW code
                         'name': college_data['name']
                     }
                     college_found = True
                     break
-        
+            
             if not college_found:
-                return False, f"College with code {college_data['code']} not found"
-        
-            # Write back to file
+                return False, f"College with code {search_code} not found"
+            
+            if old_code and old_code != college_data['code']:
+                programs = self.get_all_programs()
+                programs_updated = 0
+                
+                for program in programs:
+                    if program['college'] == old_code:
+                        program['college'] = college_data['code']
+                        programs_updated += 1
+                
+                # Save updated programs if any were changed
+                if programs_updated > 0:
+                    with open(self.programs_file, 'w', newline='', encoding='utf-8') as f:
+                        fieldnames = ['code', 'name', 'college']
+                        writer = csv.DictWriter(f, fieldnames=fieldnames)
+                        writer.writeheader()
+                        writer.writerows(programs)
+            
+            # Write colleges back to file
             with open(self.colleges_file, 'w', newline='', encoding='utf-8') as f:
                 fieldnames = ['code', 'name']
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -395,15 +415,41 @@ class DatabaseManager:
             # Refresh cache
             self._refresh_cache()
             
-            return True, f"College {college_data['name']} updated successfully!"
+            # Build success message
+            message = f"College {college_data['name']} updated successfully!"
+            if old_code and old_code != college_data['code']:
+                if programs_updated > 0:
+                    message += f"\n{programs_updated} program(s) updated to use new college code."
+            
+            return True, message
         
         except Exception as e:
             return False, f"Error updating college: {str(e)}"
 
     def delete_college(self, college_code):
-        """Delete a college from the database"""
-
+        """Delete a college from the database - only if no programs use it"""
+    
         try:
+            # CHECK 1: Are there programs using this college?
+            programs = self.get_all_programs()
+            programs_in_college = [p for p in programs if p['college'] == college_code]
+            
+            if programs_in_college:
+                # Build list of program names
+                program_list = []
+                for p in programs_in_college:
+                    program_list.append(f"• {p['name']} ({p['code']})")
+                
+                program_names = '\n'.join(program_list)
+                
+                return False, (
+                    f"Cannot delete college (Code: {college_code})!\n\n"
+                    f"The following {len(programs_in_college)} program(s) belong to this college:\n\n"
+                    f"{program_names}\n\n"
+                    f"Please delete or reassign these programs first."
+                )
+            
+            # No programs found - safe to proceed
             colleges = self.get_all_colleges()
             
             if not colleges:
