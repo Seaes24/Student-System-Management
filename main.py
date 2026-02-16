@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QTableWidgetItem,
 from PyQt6.QtCore import Qt
 import sys
 from database_manager import DatabaseManager
-from models import StudentValidator, CollegeValidator
+from models import StudentValidator, CollegeValidator, ProgramValidator
 
 
 class AddStudentDialog(QDialog):
@@ -385,25 +385,22 @@ class AddCollegeDialog(QDialog):
             self.collegecode_input.setFocus()
             return False
         
-        #  Check for duplicate code when adding OR when changing code during edit
-        if not self.is_edit_mode:
-            # Adding new college - check if code exists
-            existing = self.db_manager.get_college_by_code(college_data['code'])
-            if existing:
-                QMessageBox.warning(self, "Duplicate Error", 
-                                f"College code '{college_data['code']}' already exists!")
-                self.collegecode_input.setFocus()
-                return False
+        # ✅ FIXED: Pass current code instead of ID
+        if self.is_edit_mode:
+            current_code = self.college_data['code']  # Use code, not id
         else:
-            # Editing existing college - check if NEW code conflicts with OTHER colleges
-            if self.college_data['code'] != college_data['code']:
-                existing = self.db_manager.get_college_by_code(college_data['code'])
-                if existing:
-                    QMessageBox.warning(self, "Duplicate Error",
-                                    f"College code '{college_data['code']}' already exists!\n\n"
-                                    f"Cannot change code to one that's already in use.")
-                    self.collegecode_input.setFocus()
-                    return False
+            current_code = None
+        
+        valid, message = CollegeValidator.check_duplicate_code(
+            self.db_manager, 
+            college_data['code'], 
+            current_code  # ✅ Pass the old code
+        )
+        
+        if not valid:
+            QMessageBox.warning(self, "Duplicate Error", message)
+            self.collegecode_input.setFocus()
+            return False
         
         return True
     
@@ -457,6 +454,180 @@ class AddCollegeDialog(QDialog):
                 success, message = self.db_manager.update_college(college_data, old_code)
             else:
                 success, message = self.db_manager.add_college(college_data)
+            
+            if success:
+                QMessageBox.information(self, "Success", message)
+                self.accept()
+            else:
+                QMessageBox.critical(self, "Error", message)
+
+class AddProgramDialog(QDialog):
+    """Dialog for adding/editing programs"""
+    
+    def __init__(self, db_manager, parent=None, program_data=None):
+        super().__init__(parent)
+        self.db_manager = db_manager
+        self.college_data = program_data  # For editing existing programs
+        self.is_edit_mode = program_data is not None
+        
+        self.setWindowTitle("Edit College" if self.is_edit_mode else "Add New College")
+        self.setModal(True)
+        self.setMinimumWidth(400)
+        
+        # Setup UI
+        self.setup_ui()
+        
+        # Pre-fill data if editing
+        if self.is_edit_mode:
+            self.populate_form()
+        
+        # Set focus to first input
+        self.programname_input.setFocus()
+    
+    def setup_ui(self):
+        """Create and arrange all UI elements"""
+        layout = QVBoxLayout()
+        
+        # Form fields
+        self.create_programname_field(layout)
+        self.create_programcode_field(layout)
+        
+        layout.addSpacing(20)
+        self.create_buttons(layout)
+        
+        self.setLayout(layout)
+    
+    def create_programname_field(self, layout):
+        """Create program name input field"""
+        programname_layout = QHBoxLayout()
+        programname_layout.addWidget(QLabel("Program name:*"))
+        self.programname_input = QLineEdit()
+        self.programname_input.setPlaceholderText("Bachelor of Science in Computer Science")
+        programname_layout.addWidget(self.programname_input)
+        layout.addLayout(programname_layout)
+        
+    def create_programcode_field(self, layout):
+        """Create program code input field"""
+        programcode_layout = QHBoxLayout()
+        programcode_layout.addWidget(QLabel("Program Code (3-10 letters):*"))
+        self.programcode_input = QLineEdit()
+        self.programcode_input.setPlaceholderText("BSCS")
+        programcode_layout.addWidget(self.programcode_input)
+        layout.addLayout(programcode_layout)
+    
+    def create_buttons(self, layout):
+        """Create dialog buttons"""
+        button_layout = QHBoxLayout()
+        
+        save_text = "Update Program" if self.is_edit_mode else "Save Program"
+        self.save_button = QPushButton(save_text)
+        self.save_button.clicked.connect(self.save_program)
+        self.save_button.setDefault(True)
+        button_layout.addWidget(self.save_button)
+        
+        self.cancel_button = QPushButton("Cancel")
+        self.cancel_button.clicked.connect(self.reject)
+        button_layout.addWidget(self.cancel_button)
+        
+        layout.addLayout(button_layout)
+    
+    def populate_form(self):
+        """Pre-fill form with existing program data"""
+        if not self.program_data:
+            return
+        
+        self.programname_input.setText(self.program_data['name'])
+        self.programcode_input.setText(self.program_data['code'])
+    
+    def validate_program_data(self, program_data):
+        """Validate all program data fields"""
+
+        # Validate program name
+        valid, message = ProgramValidator.validate_program_name(program_data['name'])
+        if not valid:
+            QMessageBox.warning(self, "Validation Error", message)
+            self.programname_input.setFocus()
+            return False
+        
+        # Validate program code format
+        valid, message = ProgramValidator.validate_program_code(program_data['code'])
+        if not valid:
+            QMessageBox.warning(self, "Validation Error", message)
+            self.programcode_input.setFocus()
+            return False
+        
+        #  Check for duplicate code when adding OR when changing code during edit
+        if not self.is_edit_mode:
+            # Adding new program - check if code exists
+            existing = self.db_manager.get_program_by_code(program_data['code'])
+            if existing:
+                QMessageBox.warning(self, "Duplicate Error", 
+                                f"College code '{program_data['code']}' already exists!")
+                self.programcode_input.setFocus()
+                return False
+        else:
+            # Editing existing program - check if NEW code conflicts with OTHER programs
+            if self.program_data['code'] != program_data['code']:
+                existing = self.db_manager.get_program_by_code(program_data['code'])
+                if existing:
+                    QMessageBox.warning(self, "Duplicate Error",
+                                    f"Program code '{program_data['code']}' already exists!\n\n"
+                                    f"Cannot change code to one that's already in use.")
+                    self.programcode_input.setFocus()
+                    return False
+        
+        return True
+    
+    def get_program_data(self):
+        """Collect data from form inputs"""
+        program_data = {
+            'code': self.programcode_input.text().strip().upper(),
+            'name': self.programname_input.text().strip()
+        }
+        
+        # Add ID if editing existing college
+        if self.is_edit_mode and self.program_data:
+            program_data['id'] = self.program_data.get('id')
+        
+        return program_data
+    
+    def save_program(self):
+        """Validate and save the program"""
+        program_data = self.get_program_data()
+        
+        if not self.validate_program_data(program_data):
+            return
+        
+        # Confirmation dialog
+        action = "update" if self.is_edit_mode else "add"
+        if self.is_edit_mode and self.program_data['code'] != program_data['code']:
+            confirm_msg = (
+                f"⚠️  You are changing the program code!\n\n"
+                f"Old Code: {self.program_data['code']}\n"
+                f"New Code: {program_data['code']}\n"
+                f"Program Name: {program_data['name']}\n\n"
+                f"This will update ALL students that reference this program.\n"
+                f"Are you sure you want to continue?"
+            )
+        else:
+            confirm_msg = (
+                f"Are you sure you want to {action} this program?\n\n"
+                f"Program Code: {program_data['code']}\n"
+                f"Program Name: {program_data['name']}"
+            )
+        
+        reply = QMessageBox.question(
+            self, f"Confirm {action.title()}", confirm_msg,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            if self.is_edit_mode:
+                # ✅ Pass the ORIGINAL code for cascade update
+                old_code = self.program_data['code']
+                success, message = self.db_manager.update_program(program_data, old_code)
+            else:
+                success, message = self.db_manager.add_program(program_data)
             
             if success:
                 QMessageBox.information(self, "Success", message)
