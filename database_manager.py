@@ -297,6 +297,11 @@ class DatabaseManager:
     def add_program(self, program_data):
         """Add a new program - DON'T FORGET TO REFRESH CACHE!"""
         programs = self.get_all_programs()
+
+        for program in programs: 
+            if program['code'] == program_data['code']:
+                return False, f"Program code {program_data['code']} already exists"
+            
         programs.append(program_data)
         
         try:
@@ -306,12 +311,122 @@ class DatabaseManager:
                 writer.writeheader()
                 writer.writerows(programs)
             
-            # ✅ REFRESH CACHE after adding
+            # REFRESH CACHE after adding
             self._refresh_cache()
             
             return True, f"Program {program_data['code']} added successfully"
         except Exception as e:
             return False, f"Error saving program: {str(e)}"
+    
+    def update_program(self, program_data, old_code=None):
+        """Update an existing program and cascade to students"""
+        try:
+            programs = self.get_all_programs()
+            
+            if not programs:
+                return False, "No programs found in database"
+            
+            search_code = old_code if old_code else program_data['code']
+            program_found = False
+            
+            for i, program in enumerate(programs):
+                if program['code'] == search_code:
+                    programs[i] = {
+                        'code': program_data['code'],
+                        'name': program_data['name'],
+                        'college': program_data['college']
+                    }
+                    program_found = True
+                    break
+            
+            if not program_found:
+                return False, f"Program with code {search_code} not found"
+            
+            # If code changed, update all students using this program
+            students_updated = 0
+            if old_code and old_code != program_data['code']:
+                students = self.get_all_students()
+                
+                for student in students:
+                    if student['program_code'] == old_code:
+                        student['program_code'] = program_data['code']
+                        students_updated += 1
+                
+                if students_updated > 0:
+                    with open(self.students_file, 'w', newline='', encoding='utf-8') as f:
+                        fieldnames = ['id', 'firstname', 'lastname', 'program_code', 'year', 'gender']
+                        writer = csv.DictWriter(f, fieldnames=fieldnames)
+                        writer.writeheader()
+                        writer.writerows(students)
+            
+            # Write programs back to file
+            with open(self.programs_file, 'w', newline='', encoding='utf-8') as f:
+                fieldnames = ['code', 'name', 'college']
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(programs)
+            
+            self._refresh_cache()
+            
+            message = f"Program {program_data['name']} updated successfully!"
+            if students_updated > 0:
+                message += f"\n{students_updated} student(s) updated to new program code."
+            
+            return True, message
+        
+        except Exception as e:
+            return False, f"Error updating program: {str(e)}"
+
+    def delete_program(self, program_code):
+        """Delete a program - only if no students are enrolled"""
+        
+        try:
+            # Check if students are enrolled
+            students = self.get_all_students()
+            students_in_program = [s for s in students if s['program_code'] == program_code]
+            
+            if students_in_program:
+                student_list = [f"• {s['firstname']} {s['lastname']} ({s['id']})" 
+                            for s in students_in_program[:5]]
+                student_names = '\n'.join(student_list)
+                
+                if len(students_in_program) > 5:
+                    student_names += f"\n• ...and {len(students_in_program) - 5} more"
+                
+                return False, (
+                    f"Cannot delete program (Code: {program_code})!\n\n"
+                    f"{len(students_in_program)} student(s) are enrolled:\n\n"
+                    f"{student_names}\n\n"
+                    f"Please delete or reassign these students first."
+                )
+            
+            programs = self.get_all_programs()
+            program_name = None
+            original_count = len(programs)
+            
+            for program in programs:
+                if program['code'] == program_code:
+                    program_name = program['name']
+                    break
+            
+            programs = [p for p in programs if p['code'] != program_code]
+            
+            if len(programs) == original_count:
+                return False, f"Program with code {program_code} not found"
+            
+            with open(self.programs_file, 'w', newline='', encoding='utf-8') as f:
+                fieldnames = ['code', 'name', 'college']
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                if programs:
+                    writer.writerows(programs)
+            
+            self._refresh_cache()
+            return True, f"Program {program_name} ({program_code}) deleted successfully!"
+        
+        except Exception as e:
+            return False, f"Error deleting program: {str(e)}"
+        
     
     # ========== COLLEGE OPERATIONS ==========
     def get_all_colleges(self):

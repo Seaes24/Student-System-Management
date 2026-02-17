@@ -385,7 +385,7 @@ class AddCollegeDialog(QDialog):
             self.collegecode_input.setFocus()
             return False
         
-        # ✅ FIXED: Pass current code instead of ID
+        # FIXED: Pass current code instead of ID
         if self.is_edit_mode:
             current_code = self.college_data['code']  # Use code, not id
         else:
@@ -394,7 +394,7 @@ class AddCollegeDialog(QDialog):
         valid, message = CollegeValidator.check_duplicate_code(
             self.db_manager, 
             college_data['code'], 
-            current_code  # ✅ Pass the old code
+            current_code  # Pass the old code
         )
         
         if not valid:
@@ -410,11 +410,7 @@ class AddCollegeDialog(QDialog):
             'code': self.collegecode_input.text().strip().upper(),
             'name': self.collegename_input.text().strip()
         }
-        
-        # Add ID if editing existing college
-        if self.is_edit_mode and self.college_data:
-            college_data['id'] = self.college_data.get('id')
-        
+
         return college_data
     
     def save_college(self):
@@ -467,12 +463,15 @@ class AddProgramDialog(QDialog):
     def __init__(self, db_manager, parent=None, program_data=None):
         super().__init__(parent)
         self.db_manager = db_manager
-        self.college_data = program_data  # For editing existing programs
+        self.program_data = program_data  # For editing existing programs
         self.is_edit_mode = program_data is not None
         
-        self.setWindowTitle("Edit College" if self.is_edit_mode else "Add New College")
+        self.setWindowTitle("Edit Program" if self.is_edit_mode else "Add New Program")
         self.setModal(True)
         self.setMinimumWidth(400)
+
+        # For college dropdown
+        self.colleges = self.db_manager.get_colleges_cached()
         
         # Setup UI
         self.setup_ui()
@@ -491,6 +490,7 @@ class AddProgramDialog(QDialog):
         # Form fields
         self.create_programname_field(layout)
         self.create_programcode_field(layout)
+        self.create_college_field(layout)
         
         layout.addSpacing(20)
         self.create_buttons(layout)
@@ -514,6 +514,23 @@ class AddProgramDialog(QDialog):
         self.programcode_input.setPlaceholderText("BSCS")
         programcode_layout.addWidget(self.programcode_input)
         layout.addLayout(programcode_layout)
+
+    def create_college_field(self, layout):
+        """Create college dropdown"""
+        college_layout = QHBoxLayout()
+        college_layout.addWidget(QLabel("College:*"))
+        
+        self.college_combo = QComboBox()
+        self.college_combo.setMinimumWidth(350)
+        
+        # Populate dropdown with colleges
+        # Display: "CCS - College of Computer Studies"
+        for college in self.colleges:
+            display_text = f"{college['code']} - {college['name']}"
+            self.college_combo.addItem(display_text, college['code'])  # Store code as data
+        
+        college_layout.addWidget(self.college_combo)
+        layout.addLayout(college_layout)
     
     def create_buttons(self, layout):
         """Create dialog buttons"""
@@ -538,6 +555,13 @@ class AddProgramDialog(QDialog):
         
         self.programname_input.setText(self.program_data['name'])
         self.programcode_input.setText(self.program_data['code'])
+
+        # Sets college dropdown to current college
+        college_code = self.program_data['college']
+        for i in range(self.college_combo.count()):
+            if self.college_combo.itemData(i) == college_code:
+                self.college_combo.setCurrentIndex(i)
+                break
     
     def validate_program_data(self, program_data):
         """Validate all program data fields"""
@@ -556,25 +580,29 @@ class AddProgramDialog(QDialog):
             self.programcode_input.setFocus()
             return False
         
-        #  Check for duplicate code when adding OR when changing code during edit
-        if not self.is_edit_mode:
-            # Adding new program - check if code exists
-            existing = self.db_manager.get_program_by_code(program_data['code'])
-            if existing:
-                QMessageBox.warning(self, "Duplicate Error", 
-                                f"College code '{program_data['code']}' already exists!")
-                self.programcode_input.setFocus()
-                return False
+        # Validate college is selected
+        if not program_data['college']:
+            QMessageBox.warning(self, "Validation Error", 
+                            "Please select a college")
+            self.college_combo.setFocus()
+            return False
+
+        #  Check for duplicate code when adding OR when changing program code during edit
+        if self.is_edit_mode:
+            current_code = self.program_data['code']  # Use code, not id
         else:
-            # Editing existing program - check if NEW code conflicts with OTHER programs
-            if self.program_data['code'] != program_data['code']:
-                existing = self.db_manager.get_program_by_code(program_data['code'])
-                if existing:
-                    QMessageBox.warning(self, "Duplicate Error",
-                                    f"Program code '{program_data['code']}' already exists!\n\n"
-                                    f"Cannot change code to one that's already in use.")
-                    self.programcode_input.setFocus()
-                    return False
+            current_code = None
+        
+        valid, message = ProgramValidator.check_duplicate_code(
+            self.db_manager, 
+            program_data['code'], 
+            current_code  # Pass the old code
+        )
+        
+        if not valid:
+            QMessageBox.warning(self, "Duplicate Error", message)
+            self.programcode_input.setFocus()
+            return False
         
         return True
     
@@ -582,12 +610,9 @@ class AddProgramDialog(QDialog):
         """Collect data from form inputs"""
         program_data = {
             'code': self.programcode_input.text().strip().upper(),
-            'name': self.programname_input.text().strip()
+            'name': self.programname_input.text().strip(),
+            'college': self.college_combo.currentData()
         }
-        
-        # Add ID if editing existing college
-        if self.is_edit_mode and self.program_data:
-            program_data['id'] = self.program_data.get('id')
         
         return program_data
     
@@ -600,12 +625,16 @@ class AddProgramDialog(QDialog):
         
         # Confirmation dialog
         action = "update" if self.is_edit_mode else "add"
+
+        college_display = self.college_combo.currentText()
+
         if self.is_edit_mode and self.program_data['code'] != program_data['code']:
             confirm_msg = (
                 f"⚠️  You are changing the program code!\n\n"
                 f"Old Code: {self.program_data['code']}\n"
                 f"New Code: {program_data['code']}\n"
                 f"Program Name: {program_data['name']}\n\n"
+                f"College: {college_display}\n\n"
                 f"This will update ALL students that reference this program.\n"
                 f"Are you sure you want to continue?"
             )
@@ -613,7 +642,8 @@ class AddProgramDialog(QDialog):
             confirm_msg = (
                 f"Are you sure you want to {action} this program?\n\n"
                 f"Program Code: {program_data['code']}\n"
-                f"Program Name: {program_data['name']}"
+                f"Program Name: {program_data['name']}\n"
+                f"College: {college_display}"
             )
         
         reply = QMessageBox.question(
@@ -623,7 +653,7 @@ class AddProgramDialog(QDialog):
         
         if reply == QMessageBox.StandardButton.Yes:
             if self.is_edit_mode:
-                # ✅ Pass the ORIGINAL code for cascade update
+                # Pass the ORIGINAL code for cascade update
                 old_code = self.program_data['code']
                 success, message = self.db_manager.update_program(program_data, old_code)
             else:
@@ -645,6 +675,7 @@ class MainWindow(QMainWindow):
         self.connect_buttons()
         self.load_students_table()
         self.load_colleges_table()
+        self.load_programs_table()
     
     def connect_buttons(self):
         """Connect UI buttons to their functions"""
@@ -653,9 +684,11 @@ class MainWindow(QMainWindow):
         self.collegesButton.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
         self.addStudentButton.clicked.connect(self.open_add_student_dialog)
         self.addCollegeButton.clicked.connect(self.open_add_college_dialog)
+        self.addProgramButton.clicked.connect(self.open_add_program_dialog)
 
         # Connect sort dropdown
         self.sortComboBox_2.currentTextChanged.connect(self.sort_students_by_dropdown)
+        self.sortComboBox_3.currentTextChanged.connect(self.sort_programs_by_dropdown)
     
     def sort_students_by_dropdown(self, sort_by):
         """Sort students table based on dropdown selection"""
@@ -807,6 +840,8 @@ class MainWindow(QMainWindow):
         """Enables sort function"""
         table.setSortingEnabled(True)
 
+    # ============ College Operations ============
+
     def open_add_college_dialog(self):
         """Open the Add College dialog"""
         dialog = AddCollegeDialog(self.db_manager, self)
@@ -910,6 +945,120 @@ class MainWindow(QMainWindow):
             if success:
                 QMessageBox.information(self, "Success", message)
                 self.load_colleges_table()
+            else:
+                QMessageBox.critical(self, "Error", message)
+
+    # ============= Program Operations ===================
+
+    def sort_programs_by_dropdown(self, sort_by):
+        """Sort students table based on dropdown selection"""
+        table = self.dataTablePrograms
+    
+        # Map dropdown options to column indices
+        sort_mapping = {
+            'Program': 0,   # Program column
+            'College': 2,    # College column  
+        }
+    
+        column = sort_mapping.get(sort_by)
+        if column is not None:
+            table.sortItems(column, Qt.SortOrder.AscendingOrder)
+
+    def open_add_program_dialog(self):
+        """Open the Add Program dialog"""
+        dialog = AddProgramDialog(self.db_manager, self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.load_programs_table()
+    
+    def load_programs_table(self):
+        """Load programs from database into the table"""
+        table = self.dataTablePrograms
+        table.setSortingEnabled(False)
+        table.setRowCount(0)
+        
+        programs = self.db_manager.get_all_programs()
+        table.setRowCount(len(programs))
+    
+        for row, program in enumerate(programs):
+            table.setItem(row, 0, QTableWidgetItem(program['name']))
+            table.setItem(row, 1, QTableWidgetItem(program['code']))
+            table.setItem(row, 2, QTableWidgetItem(program['college']))
+        
+            # Add action buttons to the Actions column (column index 2)
+            self.add_action_buttons_program(row, program)
+    
+
+        table.resizeColumnsToContents()
+        table.horizontalHeader().setStretchLastSection(False)
+        table.setColumnWidth(3, 150)
+        table.setSortingEnabled(True)
+    
+    def add_action_buttons_program(self, row, program):
+        """Add Edit and Delete buttons for each program row"""
+        button_widget = QWidget()
+        button_layout = QHBoxLayout(button_widget)
+        button_layout.setContentsMargins(4, 2, 4, 2)
+        button_layout.setSpacing(4)
+        
+        edit_btn = QPushButton("✏️ Edit")
+        edit_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                padding: 5px 10px;
+                border-radius: 3px;
+                font-weight: bold;
+            }
+            QPushButton:hover { background-color: #45a049; }
+        """)
+        edit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        edit_btn.clicked.connect(lambda checked, p=program: self.edit_program(p))
+        
+        delete_btn = QPushButton("🗑️ Delete")
+        delete_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f44336;
+                color: white;
+                border: none;
+                padding: 5px 10px;
+                border-radius: 3px;
+                font-weight: bold;
+            }
+            QPushButton:hover { background-color: #da190b; }
+        """)
+        delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        delete_btn.clicked.connect(lambda checked, p=program: self.delete_program(p))
+        
+        button_layout.addWidget(edit_btn)
+        button_layout.addWidget(delete_btn)
+        
+        self.dataTablePrograms.setCellWidget(row, 3, button_widget)
+
+    def edit_program(self, program):
+        """Open dialog to edit program"""
+        dialog = AddProgramDialog(self.db_manager, self, program_data=program)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.db_manager._refresh_cache()
+            self.load_programs_table()
+            self.load_students_table()
+
+    def delete_program(self, program):
+        """Delete a program after confirmation"""
+        reply = QMessageBox.question(
+            self,
+            "Confirm Delete",
+            f"Are you sure you want to delete {program['name']} ({program['code']})?\n\n"
+            f"Warning: This may affect students enrolled in this program!",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            success, message = self.db_manager.delete_program(program['code'])
+            if success:
+                QMessageBox.information(self, "Success", message)
+                self.load_programs_table()
+                self.load_students_table()
             else:
                 QMessageBox.critical(self, "Error", message)
 

@@ -1,4 +1,3 @@
-# models.py
 import re
 from datetime import datetime
 
@@ -138,6 +137,29 @@ class ProgramValidator:
                         return False, f"'{word}' should start with capital letter"
         
         return True, "Valid program name"
+    
+    @staticmethod
+    def check_duplicate_code(db_manager, code, current_code=None):
+        """
+        Check if program code already exists
+        Args:
+            code: The new code to check
+            current_code: The current code of the program being edited (if editing)
+        """
+        # Get all programs from database
+        all_programs = db_manager.get_all_programs()
+        
+        for program in all_programs:
+            if program['code'] == code:
+                # Found a match
+                if current_code and program['code'] == current_code:
+                    # This is the same program being edited - OK
+                    continue
+                else:
+                    # Different program has this code - DUPLICATE!
+                    return False, f"Program code '{code}' already exists"
+        
+        return True, "Valid"
             
 
 class CollegeValidator:
