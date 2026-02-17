@@ -689,6 +689,11 @@ class MainWindow(QMainWindow):
         # Connect sort dropdown
         self.sortComboBox_2.currentTextChanged.connect(self.sort_students_by_dropdown)
         self.sortComboBox_3.currentTextChanged.connect(self.sort_programs_by_dropdown)
+
+        # Search bar
+        self.searchLineEdit_2.textChanged.connect(self.search_students)
+        self.searchLineEdit_3.textChanged.connect(self.search_programs)
+        self.searchLineEdit_4.textChanged.connect(self.search_colleges)
     
     def sort_students_by_dropdown(self, sort_by):
         """Sort students table based on dropdown selection"""
@@ -706,6 +711,36 @@ class MainWindow(QMainWindow):
         column = sort_mapping.get(sort_by)
         if column is not None:
             table.sortItems(column, Qt.SortOrder.AscendingOrder)
+    
+    def search_students(self, search_text):
+
+        table = self.dataTableStudents
+        search_text = search_text.lower().strip()
+
+        for row in range(table.rowCount()):
+
+            match_found = False
+
+            for col in [0, 1, 2, 3, 4]:
+                
+                cell = table.item(row, col) 
+
+                if cell is None:
+                    continue
+
+                if search_text in cell.text().lower():
+                    match_found = True
+                    break
+            
+            if match_found:
+                table.setRowHidden(row, False)
+            else:
+                table.setRowHidden(row, True)
+        
+        if search_text == "":
+            for row in range(table.rowCount()):
+                table.setRowHidden(row, False)  
+            return                     
     
     def open_add_student_dialog(self):
         """Open the Add Student dialog"""
@@ -841,7 +876,36 @@ class MainWindow(QMainWindow):
         table.setSortingEnabled(True)
 
     # ============ College Operations ============
+    def search_colleges(self, search_text):
 
+        table = self.dataTableColleges
+        search_text = search_text.lower().strip()
+
+        for row in range(table.rowCount()):
+
+            match_found = False
+
+            for col in [0, 1]:
+                
+                cell = table.item(row, col) 
+
+                if cell is None:
+                    continue
+
+                if search_text in cell.text().lower():
+                    match_found = True
+                    break
+            
+            if match_found:
+                table.setRowHidden(row, False)
+            else:
+                table.setRowHidden(row, True)
+        
+        if search_text == "":
+            for row in range(table.rowCount()):
+                table.setRowHidden(row, False)  
+            return  
+    
     def open_add_college_dialog(self):
         """Open the Add College dialog"""
         dialog = AddCollegeDialog(self.db_manager, self)
@@ -963,6 +1027,36 @@ class MainWindow(QMainWindow):
         column = sort_mapping.get(sort_by)
         if column is not None:
             table.sortItems(column, Qt.SortOrder.AscendingOrder)
+    
+    def search_programs(self, search_text):
+
+        table = self.dataTablePrograms
+        search_text = search_text.lower().strip()
+
+        for row in range(table.rowCount()):
+
+            match_found = False
+
+            for col in [0, 1, 2]:
+                
+                cell = table.item(row, col) 
+
+                if cell is None:
+                    continue
+
+                if search_text in cell.text().lower():
+                    match_found = True
+                    break
+            
+            if match_found:
+                table.setRowHidden(row, False)
+            else:
+                table.setRowHidden(row, True)
+        
+        if search_text == "":
+            for row in range(table.rowCount()):
+                table.setRowHidden(row, False)  
+            return  
 
     def open_add_program_dialog(self):
         """Open the Add Program dialog"""
