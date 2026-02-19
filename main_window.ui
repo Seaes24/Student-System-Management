@@ -23,12 +23,6 @@
         <height>300</height>
        </size>
       </property>
-      <property name="maximumSize">
-       <size>
-        <width>200</width>
-        <height>16777215</height>
-       </size>
-      </property>
       <property name="frameShape">
        <enum>QFrame::Shape::StyledPanel</enum>
       </property>
@@ -111,7 +105,7 @@
       <item>
        <widget class="QStackedWidget" name="stackedWidget">
         <property name="currentIndex">
-         <number>1</number>
+         <number>2</number>
         </property>
         <widget class="QWidget" name="studentsPage">
          <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -131,10 +125,10 @@
              </font>
             </property>
             <property name="text">
-             <string>Student Management System</string>
+             <string>Student List</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignLeft</set>
             </property>
            </widget>
           </item>
@@ -292,10 +286,10 @@
              </font>
             </property>
             <property name="text">
-             <string>Student Management System</string>
+             <string>Program List</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignLeft</set>
             </property>
            </widget>
           </item>
@@ -393,7 +387,7 @@
             </column>
             <column>
              <property name="text">
-              <string>College</string>
+              <string>College Code</string>
              </property>
             </column>
             <column>
@@ -423,10 +417,10 @@
              </font>
             </property>
             <property name="text">
-             <string>Student Management System</string>
+             <string>College List</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignLeft</set>
             </property>
            </widget>
           </item>

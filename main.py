@@ -670,12 +670,23 @@ class MainWindow(QMainWindow):
         super().__init__()
         
         uic.loadUi('main_window.ui', self)
+        self.center_window()
+
         self.db_manager = DatabaseManager()
+
+        self.resize(1100, 610)
         
         self.connect_buttons()
         self.load_students_table()
         self.load_colleges_table()
         self.load_programs_table()
+    
+    def center_window(self):
+        screen = QApplication.primaryScreen().geometry()
+        window = self.frameGeometry()
+        center_point = screen.center()
+        window.moveCenter(center_point)
+        self.move(window.topLeft())
     
     def connect_buttons(self):
         """Connect UI buttons to their functions"""
@@ -795,46 +806,76 @@ class MainWindow(QMainWindow):
     
     def add_action_buttons(self, row):
         """Add Edit and Delete buttons to a table row"""
-        # Create a widget to hold the buttons
         button_widget = QWidget()
         button_layout = QHBoxLayout()
         button_layout.setContentsMargins(4, 2, 4, 2)
         button_layout.setSpacing(4)
         
-        # Edit button
-        edit_btn = QPushButton("✏️ Edit")
+        edit_btn = QPushButton("🖉 Edit")
         edit_btn.setStyleSheet("""
             QPushButton {
-                background-color: #4CAF50;
+                background-color: #10b981;  /* Emerald green */
                 color: white;
                 border: none;
-                padding: 5px 10px;
-                border-radius: 3px;
-                font-weight: bold;
+                padding: 6px 12px;
+                border-radius: 6px;
+                font-weight: 500;
+                font-size: 12px;
+                
+                /* Subtle shadow */
+                box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+                
+                /* Smooth transitions */
+                transition: all 0.2s ease;
             }
+            
             QPushButton:hover {
-                background-color: #45a049;
+                background-color: #059669;  /* Darker emerald */
+                transform: translateY(-1px);  /* Slight lift */
+                box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+            }
+            
+            QPushButton:pressed {
+                background-color: #047857;  /* Even darker */
+                transform: translateY(0px);  /* Press down effect */
+                box-shadow: 0 1px 2px rgba(16, 185, 129, 0.2);
             }
         """)
-        edit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+
         edit_btn.clicked.connect(lambda checked, r=row: self.open_edit_student_dialog(r))
         
         # Delete button
-        delete_btn = QPushButton("🗑️ Delete")
+        delete_btn = QPushButton("🗑 Delete")
         delete_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #f44336;
-                color: white;
-                border: none;
-                padding: 5px 10px;
-                border-radius: 3px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #da190b;
-            }
-        """)
-        delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        QPushButton {
+            background-color: #ef4444;  /* Bright red */
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 12px;
+            
+            /* Subtle shadow */
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+            
+            /* Smooth transitions */
+            transition: all 0.2s ease;
+        }
+        
+        QPushButton:hover {
+            background-color: #dc2626;  /* Darker red */
+            transform: translateY(-1px);  /* Slight lift */
+            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+        }
+        
+        QPushButton:pressed {
+            background-color: #b91c1c;  /* Even darker */
+            transform: translateY(0px);  /* Press down effect */
+            box-shadow: 0 1px 2px rgba(239, 68, 68, 0.2);
+        }
+    """)
+
         delete_btn.clicked.connect(lambda checked, r=row: self.delete_student(r))
         
         # Add buttons to layout
@@ -869,8 +910,26 @@ class MainWindow(QMainWindow):
             
             # Add action buttons to each row
             self.add_action_buttons(row)
-        
+    
         table.resizeColumnsToContents()
+        table.setColumnWidth(7, 200)
+
+        header = table.horizontalHeader()
+    
+        header.setSectionResizeMode(0, header.ResizeMode.Fixed)   
+        header.setSectionResizeMode(4, header.ResizeMode.Fixed)   
+        header.setSectionResizeMode(5, header.ResizeMode.Fixed)   
+        header.setSectionResizeMode(6, header.ResizeMode.Fixed)  
+        header.setSectionResizeMode(7, header.ResizeMode.Fixed)   
+        
+        header.setSectionResizeMode(1, header.ResizeMode.Interactive)  
+        header.setSectionResizeMode(2, header.ResizeMode.Interactive) 
+        
+        header.setSectionResizeMode(3, header.ResizeMode.Stretch)      
+        
+        table.setColumnWidth(1, 100) 
+        table.setColumnWidth(2, 100) 
+
 
         """Enables sort function"""
         table.setSortingEnabled(True)
@@ -925,60 +984,90 @@ class MainWindow(QMainWindow):
             table.setItem(row, 0, QTableWidgetItem(college['name']))
             table.setItem(row, 1, QTableWidgetItem(college['code']))
         
-            # Add action buttons to the Actions column (column index 2)
             self.add_action_buttons_college(row, college)
     
-        # Adjust column widths
         table.resizeColumnsToContents()
-        table.horizontalHeader().setStretchLastSection(False)
+        table.setColumnWidth(2, 200)
+
+        header = table.horizontalHeader()
+        header.setSectionResizeMode(0, header.ResizeMode.Stretch) 
+        header.setSectionResizeMode(1, header.ResizeMode.Fixed)   
+        header.setSectionResizeMode(2, header.ResizeMode.Fixed)  
     
-        # Make Actions column fixed width
-        table.setColumnWidth(2, 150)
-    
-        # Enable sorting
         table.setSortingEnabled(True)
 
     def add_action_buttons_college(self, row, college):
         """Add Edit and Delete buttons for each college row"""
-
         button_widget = QWidget()
         button_layout = QHBoxLayout(button_widget)
         button_layout.setContentsMargins(4, 2, 4, 2)
         button_layout.setSpacing(4)
         
-        # Edit button
-        edit_btn = QPushButton("✏️ Edit")
+
+        edit_btn = QPushButton("🖉 Edit")
         edit_btn.setStyleSheet("""
             QPushButton {
-                background-color: #4CAF50;
+                background-color: #10b981;  /* Emerald green */
                 color: white;
                 border: none;
-                padding: 5px 10px;
-                border-radius: 3px;
-                font-weight: bold;
+                padding: 6px 12px;
+                border-radius: 6px;
+                font-weight: 500;
+                font-size: 12px;
+                
+                /* Subtle shadow */
+                box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+                
+                /* Smooth transitions */
+                transition: all 0.2s ease;
             }
+            
             QPushButton:hover {
-                background-color: #45a049;
+                background-color: #059669;  /* Darker emerald */
+                transform: translateY(-1px);  /* Slight lift */
+                box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+            }
+            
+            QPushButton:pressed {
+                background-color: #047857;  /* Even darker */
+                transform: translateY(0px);  /* Press down effect */
+                box-shadow: 0 1px 2px rgba(16, 185, 129, 0.2);
             }
         """)
         edit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         edit_btn.clicked.connect(lambda checked, c=college: self.edit_college(c))
         
-        # Delete button
-        delete_btn = QPushButton("🗑️ Delete")
+        delete_btn = QPushButton("🗑 Delete")
         delete_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #f44336;
-                color: white;
-                border: none;
-                padding: 5px 10px;
-                border-radius: 3px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #da190b;
-            }
-        """)
+        QPushButton {
+            background-color: #ef4444;  /* Bright red */
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 12px;
+            
+            /* Subtle shadow */
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+            
+            /* Smooth transitions */
+            transition: all 0.2s ease;
+        }
+        
+        QPushButton:hover {
+            background-color: #dc2626;  /* Darker red */
+            transform: translateY(-1px);  /* Slight lift */
+            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+        }
+        
+        QPushButton:pressed {
+            background-color: #b91c1c;  /* Even darker */
+            transform: translateY(0px);  /* Press down effect */
+            box-shadow: 0 1px 2px rgba(239, 68, 68, 0.2);
+        }
+    """)
+        
         delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         delete_btn.clicked.connect(lambda checked, c=college: self.delete_college(c))
         
@@ -1083,8 +1172,14 @@ class MainWindow(QMainWindow):
     
 
         table.resizeColumnsToContents()
-        table.horizontalHeader().setStretchLastSection(False)
-        table.setColumnWidth(3, 150)
+        table.setColumnWidth(3, 200)
+        
+        header = table.horizontalHeader()
+        header.setSectionResizeMode(0, header.ResizeMode.Stretch) 
+        header.setSectionResizeMode(1, header.ResizeMode.Fixed)   
+        header.setSectionResizeMode(2, header.ResizeMode.Fixed)   
+        header.setSectionResizeMode(3, header.ResizeMode.Fixed)  
+
         table.setSortingEnabled(True)
     
     def add_action_buttons_program(self, row, program):
@@ -1094,33 +1189,69 @@ class MainWindow(QMainWindow):
         button_layout.setContentsMargins(4, 2, 4, 2)
         button_layout.setSpacing(4)
         
-        edit_btn = QPushButton("✏️ Edit")
+        edit_btn = QPushButton("🖉 Edit")
         edit_btn.setStyleSheet("""
             QPushButton {
-                background-color: #4CAF50;
+                background-color: #10b981;  /* Emerald green */
                 color: white;
                 border: none;
-                padding: 5px 10px;
-                border-radius: 3px;
-                font-weight: bold;
+                padding: 6px 12px;
+                border-radius: 6px;
+                font-weight: 500;
+                font-size: 12px;
+                
+                /* Subtle shadow */
+                box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+                
+                /* Smooth transitions */
+                transition: all 0.2s ease;
             }
-            QPushButton:hover { background-color: #45a049; }
+            
+            QPushButton:hover {
+                background-color: #059669;  /* Darker emerald */
+                transform: translateY(-1px);  /* Slight lift */
+                box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+            }
+            
+            QPushButton:pressed {
+                background-color: #047857;  /* Even darker */
+                transform: translateY(0px);  /* Press down effect */
+                box-shadow: 0 1px 2px rgba(16, 185, 129, 0.2);
+            }
         """)
         edit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         edit_btn.clicked.connect(lambda checked, p=program: self.edit_program(p))
         
-        delete_btn = QPushButton("🗑️ Delete")
+        delete_btn = QPushButton("🗑 Delete")
         delete_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #f44336;
-                color: white;
-                border: none;
-                padding: 5px 10px;
-                border-radius: 3px;
-                font-weight: bold;
-            }
-            QPushButton:hover { background-color: #da190b; }
-        """)
+        QPushButton {
+            background-color: #ef4444;  /* Bright red */
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 12px;
+            
+            /* Subtle shadow */
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+            
+            /* Smooth transitions */
+            transition: all 0.2s ease;
+        }
+        
+        QPushButton:hover {
+            background-color: #dc2626;  /* Darker red */
+            transform: translateY(-1px);  /* Slight lift */
+            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+        }
+        
+        QPushButton:pressed {
+            background-color: #b91c1c;  /* Even darker */
+            transform: translateY(0px);  /* Press down effect */
+            box-shadow: 0 1px 2px rgba(239, 68, 68, 0.2);
+        }
+    """)
         delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         delete_btn.clicked.connect(lambda checked, p=program: self.delete_program(p))
         
