@@ -111,7 +111,7 @@
       <item>
        <widget class="QStackedWidget" name="stackedWidget">
         <property name="currentIndex">
-         <number>2</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="studentsPage">
          <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -594,7 +594,7 @@
              </spacer>
             </item>
             <item>
-             <widget class="QLabel" name="pageInfoLayoutPrograms">
+             <widget class="QLabel" name="pageInfoLabelPrograms">
               <property name="text">
                <string>Page 1 of 1</string>
               </property>
@@ -614,7 +614,7 @@
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="nextButtonStudents_2">
+             <widget class="QPushButton" name="nextButtonPrograms">
               <property name="text">
                <string>Next</string>
               </property>

@@ -23,15 +23,6 @@ class AddStudentDialog(QDialog):
         
         self.program_display_list = self.db_manager.get_program_display_list()
         
-        """self.programs_page = 1
-        self.programs_per_page = 20
-        self.programs_total_pages = 1
-        
-        self.colleges_page = 1
-        self.colleges_per_page = 20
-        self.colleges_total_pages = 1"""
-        
-        
         self.setup_ui()
         
         if self.is_edit_mode:
@@ -639,13 +630,17 @@ class MainWindow(QMainWindow):
         self.all_students = []  
         self.current_search_text = "" 
 
+        self.programs_page = 1
+        self.programs_per_page = 20
+        self.programs_total_pages = 1
+        self.all_programs = []  
+        self.current_programs_search_text = "" 
+
         self.colleges_page = 1
         self.colleges_per_page = 20
         self.colleges_total_pages = 1
         self.all_colleges = []  
         self.current_colleges_search_text = "" 
-
-
         
         self.connect_buttons()
         self.load_students_table()
@@ -677,8 +672,8 @@ class MainWindow(QMainWindow):
         self.prevButtonStudents.clicked.connect(self.prev_students_page)
         self.nextButtonStudents.clicked.connect(self.next_students_page)
         
-        # self.prevButtonPrograms.clicked.connect(self.prev_programs_page)
-        # self.nextButtonPrograms.clicked.connect(self.next_programs_page)
+        self.prevButtonPrograms.clicked.connect(self.prev_programs_page)
+        self.nextButtonPrograms.clicked.connect(self.next_programs_page)
         
         self.prevButtonColleges.clicked.connect(self.prev_colleges_page)
         self.nextButtonColleges.clicked.connect(self.next_colleges_page)
@@ -922,33 +917,10 @@ class MainWindow(QMainWindow):
 
     # ============ College Operations ============
     def search_colleges(self, search_text):
+        self.current_colleges_search_text = search_text
+        self.colleges_page = 1
+        self.load_colleges_table()    
 
-        table = self.dataTableColleges
-        search_text = search_text.lower().strip()
-
-        for row in range(table.rowCount()):
-
-            match_found = False
-
-            for col in [0, 1]:
-                cell = table.item(row, col) 
-
-                if cell is None:
-                    continue
-
-                if search_text in cell.text().lower():
-                    match_found = True
-                    break
-            
-            if match_found:
-                table.setRowHidden(row, False)
-            else:
-                table.setRowHidden(row, True)
-        
-        if search_text == "":
-            for row in range(table.rowCount()):
-                table.setRowHidden(row, False)  
-            return  
     
     def open_add_college_dialog(self):
         dialog = AddCollegeDialog(self.db_manager, self)
@@ -1130,33 +1102,9 @@ class MainWindow(QMainWindow):
             table.sortItems(column, Qt.SortOrder.AscendingOrder)
     
     def search_programs(self, search_text):
-
-        table = self.dataTablePrograms
-        search_text = search_text.lower().strip()
-
-        for row in range(table.rowCount()):
-
-            match_found = False
-
-            for col in [0, 1, 2]:
-                cell = table.item(row, col) 
-
-                if cell is None:
-                    continue
-
-                if search_text in cell.text().lower():
-                    match_found = True
-                    break
-            
-            if match_found:
-                table.setRowHidden(row, False)
-            else:
-                table.setRowHidden(row, True)
-        
-        if search_text == "":
-            for row in range(table.rowCount()):
-                table.setRowHidden(row, False)  
-            return  
+        self.current_programs_search_text = search_text
+        self.students_page = 1
+        self.load_programs_table()    
 
     def open_add_program_dialog(self):
         dialog = AddProgramDialog(self.db_manager, self)
@@ -1168,7 +1116,22 @@ class MainWindow(QMainWindow):
         table.setSortingEnabled(False)
         table.setRowCount(0)
         
-        programs = self.db_manager.get_all_programs()
+        self.all_programs = self.db_manager.get_all_programs()
+
+        search_text = self.current_programs_search_text.lower().strip()
+        if search_text:
+            filtered = [
+                p for p in self.all_programs
+                if search_text in p['name'].lower()
+                or search_text in p['code'].lower()
+                or search_text in p['college'].lower()
+            ]
+        else:
+            filtered = self.all_programs
+
+        programs, total_pages = self.get_page_data(filtered, self.programs_page, self.programs_per_page)
+        self.programs_total_pages = total_pages
+
         table.setRowCount(len(programs))
     
         for row, program in enumerate(programs):
@@ -1188,6 +1151,7 @@ class MainWindow(QMainWindow):
         header.setSectionResizeMode(2, header.ResizeMode.Fixed)   
         header.setSectionResizeMode(3, header.ResizeMode.Fixed)  
 
+        self.update_programs_pagination()
         table.setSortingEnabled(True)
     
     def add_action_buttons_program(self, row, program):
@@ -1266,6 +1230,23 @@ class MainWindow(QMainWindow):
         button_layout.addWidget(delete_btn)
         
         self.dataTablePrograms.setCellWidget(row, 3, button_widget)
+    
+    def update_programs_pagination(self):
+        self.pageInfoLabelPrograms.setText(
+            f"Page {self.programs_page} of {self.programs_total_pages}"
+        )
+        self.prevButtonPrograms.setEnabled(self.programs_page > 1)
+        self.nextButtonPrograms.setEnabled(self.programs_page < self.programs_total_pages)
+
+    def prev_programs_page(self):
+        if self.programs_page > 1:
+            self.programs_page -= 1
+            self.load_programs_table()
+
+    def next_programs_page(self):
+        if self.programs_page < self.programs_total_pages:
+            self.programs_page += 1
+            self.load_programs_table()
 
     def edit_program(self, program):
         dialog = AddProgramDialog(self.db_manager, self, program_data=program)
