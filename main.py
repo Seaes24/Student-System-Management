@@ -638,6 +638,14 @@ class MainWindow(QMainWindow):
         self.students_total_pages = 1
         self.all_students = []  
         self.current_search_text = "" 
+
+        self.colleges_page = 1
+        self.colleges_per_page = 20
+        self.colleges_total_pages = 1
+        self.all_colleges = []  
+        self.current_colleges_search_text = "" 
+
+
         
         self.connect_buttons()
         self.load_students_table()
@@ -652,7 +660,6 @@ class MainWindow(QMainWindow):
         self.move(window.topLeft())
     
     def connect_buttons(self):
-        """Connect UI buttons to their functions"""
         self.studentsButton.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
         self.programsButton.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
         self.collegesButton.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
@@ -673,8 +680,8 @@ class MainWindow(QMainWindow):
         # self.prevButtonPrograms.clicked.connect(self.prev_programs_page)
         # self.nextButtonPrograms.clicked.connect(self.next_programs_page)
         
-        # self.prevButtonColleges.clicked.connect(self.prev_colleges_page)
-        # self.nextButtonColleges.clicked.connect(self.next_colleges_page)
+        self.prevButtonColleges.clicked.connect(self.prev_colleges_page)
+        self.nextButtonColleges.clicked.connect(self.next_colleges_page)
     
     def sort_students_by_dropdown(self, sort_by):
         table = self.dataTableStudents
@@ -953,7 +960,21 @@ class MainWindow(QMainWindow):
         table.setSortingEnabled(False)
         table.setRowCount(0)
         
-        colleges = self.db_manager.get_all_colleges()
+        self.all_colleges = self.db_manager.get_all_colleges()
+
+        search_text = self.current_colleges_search_text.lower().strip()
+        if search_text:
+            filtered = [
+                c for c in self.all_colleges
+                if search_text in c['name'].lower()
+                or search_text in c['code'].lower()
+            ]
+        else:
+            filtered = self.all_colleges
+
+        colleges, total_pages = self.get_page_data(filtered, self.colleges_page, self.colleges_per_page)
+        self.colleges_total_pages = total_pages
+
         table.setRowCount(len(colleges))
     
         for row, college in enumerate(colleges):
@@ -961,7 +982,7 @@ class MainWindow(QMainWindow):
             table.setItem(row, 1, QTableWidgetItem(college['code']))
         
             self.add_action_buttons_college(row, college)
-    
+
         table.resizeColumnsToContents()
         table.setColumnWidth(2, 200)
 
@@ -969,7 +990,8 @@ class MainWindow(QMainWindow):
         header.setSectionResizeMode(0, header.ResizeMode.Stretch) 
         header.setSectionResizeMode(1, header.ResizeMode.Fixed)   
         header.setSectionResizeMode(2, header.ResizeMode.Fixed)  
-    
+        
+        self.update_colleges_pagination()
         table.setSortingEnabled(True)
 
     def add_action_buttons_college(self, row, college):
@@ -1050,6 +1072,23 @@ class MainWindow(QMainWindow):
         button_layout.addWidget(delete_btn)
         
         self.dataTableColleges.setCellWidget(row, 2, button_widget)
+    
+    def update_colleges_pagination(self):
+        self.pageInfoLabelColleges.setText(
+            f"Page {self.colleges_page} of {self.colleges_total_pages}"
+        )
+        self.prevButtonColleges.setEnabled(self.colleges_page > 1)
+        self.nextButtonColleges.setEnabled(self.colleges_page < self.colleges_total_pages)
+
+    def prev_colleges_page(self):
+        if self.colleges_page > 1:
+            self.colleges_page -= 1
+            self.load_colleges_table()
+
+    def next_colleges_page(self):
+        if self.colleges_page < self.colleges_total_pages:
+            self.colleges_page += 1
+            self.load_colleges_table()
 
     def edit_college(self, college):
         dialog = AddCollegeDialog(self.db_manager, self, college_data=college)
