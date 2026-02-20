@@ -191,7 +191,6 @@ class DatabaseManager:
         
         except Exception as e:
             return False, f"Error deleting student: {str(e)}"
-    
     # ========== PROGRAM OPERATIONS ==========
     def get_all_programs(self):
         programs = []

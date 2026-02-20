@@ -14,20 +14,26 @@ class AddStudentDialog(QDialog):
     def __init__(self, db_manager, parent=None, student_data=None):
         super().__init__(parent)
         self.db_manager = db_manager
-        self.student_data = student_data  # For editing existing student
+        self.student_data = student_data
         self.is_edit_mode = student_data is not None
         
         self.setWindowTitle("Edit Student" if self.is_edit_mode else "Add New Student")
         self.setModal(True)
         self.setMinimumWidth(500)
         
-        
         self.program_display_list = self.db_manager.get_program_display_list()
+        
+        """self.programs_page = 1
+        self.programs_per_page = 20
+        self.programs_total_pages = 1
+        
+        self.colleges_page = 1
+        self.colleges_per_page = 20
+        self.colleges_total_pages = 1"""
         
         
         self.setup_ui()
         
-        # Pre-fill data if editing
         if self.is_edit_mode:
             self.populate_form()
         
@@ -54,7 +60,6 @@ class AddStudentDialog(QDialog):
         self.id_input = QLineEdit()
         self.id_input.setPlaceholderText("2024-0001")
         
-        # Disable ID field when editing
         if self.is_edit_mode:
             self.id_input.setReadOnly(True)
             self.id_input.setStyleSheet("background-color: #f0f0f0;")
@@ -173,7 +178,6 @@ class AddStudentDialog(QDialog):
         if selected_text in self.program_data:
             return self.program_data[selected_text]['code']
         
-        # Try partial match
         for display, data in self.program_data.items():
             if selected_text.lower() in display.lower():
                 return data['code']
@@ -226,7 +230,6 @@ class AddStudentDialog(QDialog):
         return True
     
     def get_student_data(self):
-        # Collect data from form inputs
         selected_program_code = self.get_selected_program_code()
         
         return {
@@ -629,6 +632,12 @@ class MainWindow(QMainWindow):
         self.db_manager = DatabaseManager()
 
         self.resize(1100, 610)
+
+        self.students_page = 1
+        self.students_per_page = 20
+        self.students_total_pages = 1
+        self.all_students = []  
+        self.current_search_text = "" 
         
         self.connect_buttons()
         self.load_students_table()
@@ -657,11 +666,18 @@ class MainWindow(QMainWindow):
         self.searchLineEdit_2.textChanged.connect(self.search_students)
         self.searchLineEdit_3.textChanged.connect(self.search_programs)
         self.searchLineEdit_4.textChanged.connect(self.search_colleges)
+
+        self.prevButtonStudents.clicked.connect(self.prev_students_page)
+        self.nextButtonStudents.clicked.connect(self.next_students_page)
+        
+        # self.prevButtonPrograms.clicked.connect(self.prev_programs_page)
+        # self.nextButtonPrograms.clicked.connect(self.next_programs_page)
+        
+        # self.prevButtonColleges.clicked.connect(self.prev_colleges_page)
+        # self.nextButtonColleges.clicked.connect(self.next_colleges_page)
     
     def sort_students_by_dropdown(self, sort_by):
         table = self.dataTableStudents
-    
-        
         sort_mapping = {
             'Program': 3,   
             'Name': 2,      
@@ -675,33 +691,9 @@ class MainWindow(QMainWindow):
             table.sortItems(column, Qt.SortOrder.AscendingOrder)
     
     def search_students(self, search_text):
-
-        table = self.dataTableStudents
-        search_text = search_text.lower().strip()
-
-        for row in range(table.rowCount()):
-
-            match_found = False
-
-            for col in [0, 1, 2, 3, 4]:
-                cell = table.item(row, col) 
-
-                if cell is None:
-                    continue
-
-                if search_text in cell.text().lower():
-                    match_found = True
-                    break
-            
-            if match_found:
-                table.setRowHidden(row, False)
-            else:
-                table.setRowHidden(row, True)
-        
-        if search_text == "":
-            for row in range(table.rowCount()):
-                table.setRowHidden(row, False)  
-            return                     
+        self.current_search_text = search_text
+        self.students_page = 1
+        self.load_students_table()    
     
     def open_add_student_dialog(self):
         """Open the Add Student dialog"""
@@ -826,12 +818,62 @@ class MainWindow(QMainWindow):
         
         self.dataTableStudents.setCellWidget(row, 7, button_widget)
     
+    def prev_students_page(self):
+        if self.students_page > 1:
+            self.students_page -= 1
+            self.load_students_table()
+
+    def next_students_page(self):
+        if self.students_page < self.students_total_pages:
+            self.students_page += 1
+            self.load_students_table()
+
+    def update_students_pagination(self):
+        self.pageInfoLabelStudents.setText(
+            f"Page {self.students_page} of {self.students_total_pages}"
+        )
+        self.prevButtonStudents.setEnabled(self.students_page > 1)
+        self.nextButtonStudents.setEnabled(
+            self.students_page < self.students_total_pages
+        )
+    
+    def get_page_data(self, all_data, current_page, per_page):
+        import math
+        
+        total_pages = math.ceil(len(all_data) / per_page)
+        if total_pages == 0:
+            total_pages = 1
+        
+        start_idx = (current_page - 1) * per_page
+        end_idx = start_idx + per_page
+        
+        page_data = all_data[start_idx:end_idx]
+        
+        return page_data, total_pages
+
     def load_students_table(self):
         table = self.dataTableStudents
         table.setSortingEnabled(False)
         table.setRowCount(0)
         
-        students = self.db_manager.get_students_with_details()
+        self.all_students = self.db_manager.get_students_with_details()
+    
+        search_text = self.current_search_text.lower().strip()
+        if search_text:
+            filtered = [
+                s for s in self.all_students
+                if search_text in s['id'].lower()
+                or search_text in s['firstname'].lower()
+                or search_text in s['lastname'].lower()
+                or search_text in s.get('program_name', s['program_code']).lower()
+                or search_text in s.get('college_code', '').lower()
+            ]
+        else:
+            filtered = self.all_students
+
+        students, total_pages = self.get_page_data(filtered, self.students_page, self.students_per_page)
+        self.students_total_pages = total_pages
+        
         table.setRowCount(len(students))
         
         headers = ['ID', 'First Name', 'Last Name', 'Program', 'College', 'Year', 'Gender', 'Actions']
@@ -868,8 +910,7 @@ class MainWindow(QMainWindow):
         table.setColumnWidth(1, 100) 
         table.setColumnWidth(2, 100) 
 
-
-        """Enables sort function"""
+        self.update_students_pagination()
         table.setSortingEnabled(True)
 
     # ============ College Operations ============
