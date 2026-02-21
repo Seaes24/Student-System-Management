@@ -701,7 +701,6 @@ class MainWindow(QMainWindow):
         self.load_students_table()    
     
     def open_add_student_dialog(self):
-        """Open the Add Student dialog"""
         dialog = AddStudentDialog(self.db_manager, self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self.load_students_table()

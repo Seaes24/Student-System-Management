@@ -20,6 +20,68 @@
    <string>Student Management System</string>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="styleSheet">
+    <string notr="true">/* GLOBAL */
+QWidget {
+    background-color: #F8FAFC;
+    color: #0F172A;
+	font: Segoe UI, Arial;
+    font-size: 10pt;
+}
+
+/* HEADINGS */
+QLabel#headerColleges {
+    font-size: 20pt;
+    font-weight: 600;
+}
+
+/* HEADINGS */
+QLabel#headerStudents {
+    font-size: 20pt;
+    font-weight: 600;
+}
+
+/* HEADINGS */
+QLabel#headerPrograms {
+    font-size: 20pt;
+    font-weight: 600;
+}
+
+/* PANELS / CARDS */
+QFrame, QGroupBox {
+    background-color: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+}
+
+QLineEdit {
+    background-color: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    padding: 6px;
+}
+
+QLineEdit:focus {
+    border: 1px solid #2563EB;
+}
+
+QComboBox {
+    background-color: white;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    padding: 4px 8px;
+}
+
+QComboBox:focus {
+    border: 1px solid #2563EB;
+}
+
+QLabel#pageInfoLabelColleges {
+    color: #475569;
+    font-weight: 500;
+    padding: 4px 12px;
+}</string>
+   </property>
    <layout class="QHBoxLayout" name="horizontalLayout_2">
     <item>
      <widget class="QFrame" name="sidebarFrame">
@@ -28,6 +90,28 @@
         <width>200</width>
         <height>300</height>
        </size>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QFrame#sidebarFrame {
+    background-color: #0F172A;
+}
+
+QFrame#sidebarFrame QPushButton {
+    background-color: transparent;
+    color: #E5E7EB;
+    border: none;
+    padding: 10px;
+    text-align: left;
+    border-radius: 6px;
+}
+
+QFrame#sidebarFrame QPushButton:hover {
+    background-color: #334155;
+}
+
+QFrame#sidebarFrame QPushButton:checked {
+    background-color: #1E293B;
+}</string>
       </property>
       <property name="frameShape">
        <enum>QFrame::Shape::StyledPanel</enum>
@@ -59,6 +143,13 @@
            <height>50</height>
           </size>
          </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton {
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-weight: 500;
+}</string>
+         </property>
          <property name="text">
           <string>Students</string>
          </property>
@@ -72,8 +163,18 @@
            <height>50</height>
           </size>
          </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton {
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-weight: 500;
+}</string>
+         </property>
          <property name="text">
           <string>Programs</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -85,8 +186,18 @@
            <height>50</height>
           </size>
          </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton {
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-weight: 500;
+}</string>
+         </property>
          <property name="text">
           <string>Colleges</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -111,7 +222,7 @@
       <item>
        <widget class="QStackedWidget" name="stackedWidget">
         <property name="currentIndex">
-         <number>2</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="studentsPage">
          <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -128,9 +239,10 @@
             </property>
             <property name="font">
              <font>
-              <family>Times New Roman</family>
-              <pointsize>16</pointsize>
-              <bold>true</bold>
+              <family>UI</family>
+              <pointsize>20</pointsize>
+              <italic>false</italic>
+              <fontweight>DemiBold</fontweight>
              </font>
             </property>
             <property name="text">
@@ -227,6 +339,16 @@
                  <height>40</height>
                 </size>
                </property>
+               <property name="styleSheet">
+                <string notr="true">QPushButton#addStudentButton {
+    background-color: #2563EB;
+    color: white;
+}
+
+QPushButton#addStudentButton:hover {
+    background-color: #1D4ED8;
+}</string>
+               </property>
                <property name="text">
                 <string>Add Student</string>
                </property>
@@ -237,6 +359,29 @@
           </item>
           <item>
            <widget class="QTableWidget" name="dataTableStudents">
+            <property name="styleSheet">
+             <string notr="true">QTableWidget {
+    background-color: white;
+    alternate-background-color: #FAFAFA;
+    gridline-color: #E2E8F0;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+}
+
+QHeaderView::section {
+    background-color: #F8FAFC;
+    color: #475569;
+    padding: 6px;
+    border: none;
+    border-bottom: 1px solid #E2E8F0;
+    font-weight: 600;
+}
+
+QTableWidget::item:selected {
+    background-color: #DBEAFE;
+    color: #0F172A;
+}</string>
+            </property>
             <property name="alternatingRowColors">
              <bool>true</bool>
             </property>
@@ -327,6 +472,27 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="styleSheet">
+               <string notr="true">QPushButton {
+    background-color: white;
+    border: 1px solid #CBD5E1;
+    padding: 6px 14px;
+    border-radius: 8px;
+    color: #0F172A;
+}
+
+QPushButton:hover,
+QPushButton:hover {
+    background-color: #F1F5F9;
+}
+
+QPushButton:disabled,
+QPushButton:disabled {
+    background-color: #F8FAFC;
+    color: #94A3B8;
+    border: 1px solid #E2E8F0;
+}</string>
+              </property>
               <property name="text">
                <string>Previous</string>
               </property>
@@ -352,6 +518,13 @@
                 <width>120</width>
                 <height>0</height>
                </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QLabel {
+    color: #475569;
+    font-weight: 500;
+    padding: 4px 12px;
+}</string>
               </property>
               <property name="text">
                <string>Page 1 of 1</string>
@@ -387,6 +560,27 @@
                 <width>120</width>
                 <height>16777215</height>
                </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QPushButton {
+    background-color: white;
+    border: 1px solid #CBD5E1;
+    padding: 6px 14px;
+    border-radius: 8px;
+    color: #0F172A;
+}
+
+QPushButton:hover,
+QPushButton:hover {
+    background-color: #F1F5F9;
+}
+
+QPushButton:disabled,
+QPushButton:disabled {
+    background-color: #F8FAFC;
+    color: #94A3B8;
+    border: 1px solid #E2E8F0;
+}</string>
               </property>
               <property name="text">
                <string>Next</string>
@@ -428,9 +622,10 @@
             </property>
             <property name="font">
              <font>
-              <family>Times New Roman</family>
-              <pointsize>16</pointsize>
-              <bold>true</bold>
+              <family>UI</family>
+              <pointsize>20</pointsize>
+              <italic>false</italic>
+              <fontweight>DemiBold</fontweight>
              </font>
             </property>
             <property name="text">
@@ -507,6 +702,16 @@
                  <height>40</height>
                 </size>
                </property>
+               <property name="styleSheet">
+                <string notr="true">QPushButton#addProgramButton {
+    background-color: #2563EB;
+    color: white;
+}
+
+QPushButton#addProgramButton:hover {
+    background-color: #1D4ED8;
+}</string>
+               </property>
                <property name="text">
                 <string>Add Program</string>
                </property>
@@ -517,6 +722,29 @@
           </item>
           <item>
            <widget class="QTableWidget" name="dataTablePrograms">
+            <property name="styleSheet">
+             <string notr="true">QTableWidget {
+    background-color: white;
+    alternate-background-color: #FAFAFA;
+    gridline-color: #E2E8F0;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+}
+
+QHeaderView::section {
+    background-color: #F8FAFC;
+    color: #475569;
+    padding: 6px;
+    border: none;
+    border-bottom: 1px solid #E2E8F0;
+    font-weight: 600;
+}
+
+QTableWidget::item:selected {
+    background-color: #DBEAFE;
+    color: #0F172A;
+}</string>
+            </property>
             <property name="alternatingRowColors">
              <bool>true</bool>
             </property>
@@ -580,6 +808,27 @@
             </item>
             <item>
              <widget class="QPushButton" name="prevButtonPrograms">
+              <property name="styleSheet">
+               <string notr="true">QPushButton {
+    background-color: white;
+    border: 1px solid #CBD5E1;
+    padding: 6px 14px;
+    border-radius: 8px;
+    color: #0F172A;
+}
+
+QPushButton:hover,
+QPushButton:hover {
+    background-color: #F1F5F9;
+}
+
+QPushButton:disabled,
+QPushButton:disabled {
+    background-color: #F8FAFC;
+    color: #94A3B8;
+    border: 1px solid #E2E8F0;
+}</string>
+              </property>
               <property name="text">
                <string>Prev</string>
               </property>
@@ -600,6 +849,13 @@
             </item>
             <item>
              <widget class="QLabel" name="pageInfoLabelPrograms">
+              <property name="styleSheet">
+               <string notr="true">QLabel {
+    color: #475569;
+    font-weight: 500;
+    padding: 4px 12px;
+}</string>
+              </property>
               <property name="text">
                <string>Page 1 of 1</string>
               </property>
@@ -620,6 +876,27 @@
             </item>
             <item>
              <widget class="QPushButton" name="nextButtonPrograms">
+              <property name="styleSheet">
+               <string notr="true">QPushButton {
+    background-color: white;
+    border: 1px solid #CBD5E1;
+    padding: 6px 14px;
+    border-radius: 8px;
+    color: #0F172A;
+}
+
+QPushButton:hover,
+QPushButton:hover {
+    background-color: #F1F5F9;
+}
+
+QPushButton:disabled,
+QPushButton:disabled {
+    background-color: #F8FAFC;
+    color: #94A3B8;
+    border: 1px solid #E2E8F0;
+}</string>
+              </property>
               <property name="text">
                <string>Next</string>
               </property>
@@ -643,6 +920,9 @@
          </layout>
         </widget>
         <widget class="QWidget" name="collegesPage">
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
          <layout class="QVBoxLayout" name="verticalLayout_4">
           <property name="topMargin">
            <number>20</number>
@@ -657,10 +937,14 @@
             </property>
             <property name="font">
              <font>
-              <family>Times New Roman</family>
-              <pointsize>16</pointsize>
-              <bold>true</bold>
+              <family>UI</family>
+              <pointsize>20</pointsize>
+              <italic>false</italic>
+              <fontweight>DemiBold</fontweight>
              </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true"/>
             </property>
             <property name="text">
              <string>College List</string>
@@ -731,6 +1015,16 @@
                  <height>40</height>
                 </size>
                </property>
+               <property name="styleSheet">
+                <string notr="true">QPushButton#addCollegeButton {
+    background-color: #2563EB;
+    color: white;
+}
+
+QPushButton#addCollogeButton:hover {
+    background-color: #1D4ED8;
+}</string>
+               </property>
                <property name="text">
                 <string>Add College</string>
                </property>
@@ -741,6 +1035,30 @@
           </item>
           <item>
            <widget class="QTableWidget" name="dataTableColleges">
+            <property name="styleSheet">
+             <string notr="true">QTableWidget {
+    background-color: white;
+    alternate-background-color: #FAFAFA;
+    gridline-color: #E2E8F0;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+}
+
+QHeaderView::section {
+    background-color: #F8FAFC;
+    color: #475569;
+    padding: 6px;
+    border: none;
+    border-bottom: 1px solid #E2E8F0;
+    font-weight: 600;
+}
+
+QTableWidget::item:selected {
+    background-color: #DBEAFE;
+    color: #0F172A;
+}
+</string>
+            </property>
             <property name="alternatingRowColors">
              <bool>true</bool>
             </property>
@@ -799,6 +1117,27 @@
             </item>
             <item>
              <widget class="QPushButton" name="prevButtonColleges">
+              <property name="styleSheet">
+               <string notr="true">QPushButton {
+    background-color: white;
+    border: 1px solid #CBD5E1;
+    padding: 6px 14px;
+    border-radius: 8px;
+    color: #0F172A;
+}
+
+QPushButton:hover,
+QPushButton:hover {
+    background-color: #F1F5F9;
+}
+
+QPushButton:disabled,
+QPushButton:disabled {
+    background-color: #F8FAFC;
+    color: #94A3B8;
+    border: 1px solid #E2E8F0;
+}</string>
+              </property>
               <property name="text">
                <string>Prev</string>
               </property>
@@ -839,6 +1178,27 @@
             </item>
             <item>
              <widget class="QPushButton" name="nextButtonColleges">
+              <property name="styleSheet">
+               <string notr="true">QPushButton {
+    background-color: white;
+    border: 1px solid #CBD5E1;
+    padding: 6px 14px;
+    border-radius: 8px;
+    color: #0F172A;
+}
+
+QPushButton:hover,
+QPushButton:hover {
+    background-color: #F1F5F9;
+}
+
+QPushButton:disabled,
+QPushButton:disabled {
+    background-color: #F8FAFC;
+    color: #94A3B8;
+    border: 1px solid #E2E8F0;
+}</string>
+              </property>
               <property name="text">
                <string>Next</string>
               </property>
