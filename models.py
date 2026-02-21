@@ -172,7 +172,7 @@ class DataLookup:
     
     @staticmethod
     def get_program_name_by_code(programs, code):
-        if code == 'N/A':
+        if code == 'N/A' or not code:
             return 'N/A'
         
         for program in programs:
@@ -183,6 +183,9 @@ class DataLookup:
     
     @staticmethod
     def get_program_code_by_name(programs, name):
+        if name == 'N/A' or not name:
+            return 'N/A'
+        
         for program in programs:
             if program['name'] == name:
                 return program['code']
@@ -190,7 +193,7 @@ class DataLookup:
     
     @staticmethod
     def get_college_code_by_program(programs, program_code):
-        if program_code == 'N/A':
+        if program_code == 'N/A' or not program_code:
             return 'N/A'
         
         for program in programs:
@@ -201,7 +204,7 @@ class DataLookup:
     
     @staticmethod
     def get_college_name_by_code(colleges, college_code):
-        if college_code == 'N/A':
+        if college_code == 'N/A' or not college_code:
             return 'N/A'
         
         for college in colleges:
@@ -215,7 +218,8 @@ class DataLookup:
         display_list = []
         
         for program in programs:
-            display_text = f"{program['name']} ({program['college']})"
+            college_display = program['college'] if program['college'] != 'N/A' else 'No College'
+            display_text = f"{program['name']} ({college_display})"
             display_list.append({
                 'display': display_text,
                 'code': program['code'],

@@ -301,27 +301,27 @@ class DatabaseManager:
             return False, f"Error updating program: {str(e)}"
 
     def delete_program(self, program_code):
-        
         try:
             students = self.get_all_students()
-            students_in_program = [s for s in students if s['program_code'] == program_code]
+            students_updated = 0
             
-            if students_in_program:
-                student_list = [f"• {s['firstname']} {s['lastname']} ({s['id']})" 
-                            for s in students_in_program[:5]]
-                student_names = '\n'.join(student_list)
-                
-                if len(students_in_program) > 5:
-                    student_names += f"\n• ...and {len(students_in_program) - 5} more"
-                
-                return False, (
-                    f"Cannot delete program (Code: {program_code})!\n\n"
-                    f"{len(students_in_program)} student(s) are enrolled:\n\n"
-                    f"{student_names}\n\n"
-                    f"Please delete or reassign these students first."
-                )
+            for student in students:
+                if student['program_code'] == program_code:
+                    student['program_code'] = 'N/A'
+                    students_updated += 1
+            
+            if students_updated > 0:
+                with open(self.students_file, 'w', newline='', encoding='utf-8') as f:
+                    fieldnames = ['id', 'firstname', 'lastname', 'program_code', 'year', 'gender']
+                    writer = csv.DictWriter(f, fieldnames=fieldnames)
+                    writer.writeheader()
+                    writer.writerows(students)
             
             programs = self.get_all_programs()
+            
+            if not programs:
+                return False, "No programs found in database"
+            
             program_name = None
             original_count = len(programs)
             
@@ -343,7 +343,12 @@ class DatabaseManager:
                     writer.writerows(programs)
             
             self._refresh_cache()
-            return True, f"Program {program_name} ({program_code}) deleted successfully!"
+            
+            message = f"Program {program_name} ({program_code}) deleted successfully!"
+            if students_updated > 0:
+                message += f"\n{students_updated} student(s) were updated to have 'N/A' as their program."
+            
+            return True, message
         
         except Exception as e:
             return False, f"Error deleting program: {str(e)}"
@@ -450,24 +455,21 @@ class DatabaseManager:
             return False, f"Error updating college: {str(e)}"
 
     def delete_college(self, college_code):
-    
         try:
             programs = self.get_all_programs()
-            programs_in_college = [p for p in programs if p['college'] == college_code]
+            programs_updated = 0
             
-            if programs_in_college:
-                program_list = []
-                for p in programs_in_college:
-                    program_list.append(f"• {p['name']} ({p['code']})")
-                
-                program_names = '\n'.join(program_list)
-                
-                return False, (
-                    f"Cannot delete college (Code: {college_code})!\n\n"
-                    f"The following {len(programs_in_college)} program(s) belong to this college:\n\n"
-                    f"{program_names}\n\n"
-                    f"Please delete or reassign these programs first."
-                )
+            for program in programs:
+                if program['college'] == college_code:
+                    program['college'] = 'N/A'
+                    programs_updated += 1
+            
+            if programs_updated > 0:
+                with open(self.programs_file, 'w', newline='', encoding='utf-8') as f:
+                    fieldnames = ['code', 'name', 'college']
+                    writer = csv.DictWriter(f, fieldnames=fieldnames)
+                    writer.writeheader()
+                    writer.writerows(programs)
             
             colleges = self.get_all_colleges()
             
@@ -497,7 +499,11 @@ class DatabaseManager:
             
             self._refresh_cache()
             
-            return True, f"College {college_name} (Code: {college_code}) deleted successfully!"
+            message = f"College {college_name} (Code: {college_code}) deleted successfully!"
+            if programs_updated > 0:
+                message += f"\n{programs_updated} program(s) were updated to have 'N/A' as their college."
+            
+            return True, message
         
         except Exception as e:
             return False, f"Error deleting college: {str(e)}"

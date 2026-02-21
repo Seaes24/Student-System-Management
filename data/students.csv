@@ -1,9 +1,8 @@
 id,firstname,lastname,program_code,year,gender
 2024-9999,Test,User,BSCS,1,Male
 2027-9999,John,Smith,BSCE,1,Male
-2023-0001,Hohn,Mith,BAELS,1,Male
-2023-0008,Kim,Chiu,BAELS,1,Female
-2023-0022,Arthur,Kim,BAELS,1,Male
+2023-0008,Kim,Chiu,N/A,1,Female
+2023-0022,Arthur,Kim,N/A,1,Male
 2023-0002,Lit,Romania,BSCS,5,Male
 2020-0012,Kythe,Florence,BSCA,3,Male
 2024-0004,Arra,Bella,BSMB,1,Male

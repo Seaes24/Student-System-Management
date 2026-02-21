@@ -59,7 +59,6 @@ class AddStudentDialog(QDialog):
         layout.addLayout(id_layout)
     
     def create_firstname_field(self, layout):
-        """Create first name input field"""
         firstname_layout = QHBoxLayout()
         firstname_layout.addWidget(QLabel("First Name:*"))
         self.firstname_input = QLineEdit()
@@ -68,7 +67,6 @@ class AddStudentDialog(QDialog):
         layout.addLayout(firstname_layout)
     
     def create_lastname_field(self, layout):
-        """Create last name input field"""
         lastname_layout = QHBoxLayout()
         lastname_layout.addWidget(QLabel("Last Name:*"))
         self.lastname_input = QLineEdit()
@@ -77,7 +75,6 @@ class AddStudentDialog(QDialog):
         layout.addLayout(lastname_layout)
     
     def create_program_field(self, layout):
-        """Create program combo box with auto-complete"""
         program_layout = QHBoxLayout()
         program_layout.addWidget(QLabel("Program Name:*"))
         
@@ -86,6 +83,10 @@ class AddStudentDialog(QDialog):
         self.program_combo.setMinimumWidth(350)
         
         display_texts = [item['display'] for item in self.program_display_list]
+
+        if 'N/A' not in display_texts:
+            display_texts.insert(0, 'N/A')
+
         self.program_combo.addItems(display_texts)
         
         completer = QCompleter(display_texts)
@@ -96,6 +97,7 @@ class AddStudentDialog(QDialog):
         
 
         self.program_data = {item['display']: item for item in self.program_display_list}
+        self.program_data['N/A'] = {'code': 'N/A', 'name': 'N/A', 'college': 'N/A'}
         
         program_layout.addWidget(self.program_combo)
         layout.addLayout(program_layout)
@@ -183,6 +185,24 @@ class AddStudentDialog(QDialog):
             QMessageBox.warning(self, "Validation Error", message)
             self.id_input.setFocus()
             return False
+        
+        # Modify program validation to accept 'N/A'
+        if student_data['program_code'] == 'N/A':
+            reply = QMessageBox.warning(
+                self, "No Program Selected",
+                "You are setting this student to have no program. Continue?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.No:
+                self.program_combo.setFocus()
+                return False
+        else:
+            if not self.db_manager.program_exists(student_data['program_code']):
+                QMessageBox.warning(self, "Validation Error", 
+                                f"Program '{self.program_combo.currentText()}' does not exist.\n"
+                                "Please select a program from the list.")
+                self.program_combo.setFocus()
+                return False
         
         # Validate First Name
         valid, message = StudentValidator.validate_name(student_data['firstname'], "First Name")
@@ -1081,21 +1101,47 @@ class MainWindow(QMainWindow):
             self.load_students_table()
 
     def delete_college(self, college):
-        reply = QMessageBox.question(
-            self,
-            "Confirm Delete",
-            f"Are you sure you want to delete {college['name']} ({college['code']})?\n\n"
-            f"Warning: This may affect associated courses and students!",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-        )
-        
-        if reply == QMessageBox.StandardButton.Yes:
-            success, message = self.db_manager.delete_college(college['code'])
-            if success:
-                QMessageBox.information(self, "Success", message)
-                self.load_colleges_table()
-            else:
-                QMessageBox.critical(self, "Error", message)
+        try:
+            programs = self.db_manager.get_all_programs()
+            programs_under_college = [p for p in programs if p['college'] == college['code']]
+            
+            warning_msg = f"Are you sure you want to delete {college['name']} ({college['code']})?"
+            
+            if programs_under_college:
+                program_list = '\n'.join([f"  • {p['name']} ({p['code']})" for p in programs_under_college[:5]])
+                if len(programs_under_college) > 5:
+                    program_list += f"\n  • ...and {len(programs_under_college) - 5} more"
+                
+                warning_msg += (
+                    f"\n\n⚠️  WARNING: This college has {len(programs_under_college)} program(s):"
+                    f"\n{program_list}"
+                    f"\n\nThese programs will be updated to have 'N/A' as their college."
+                    f"\nStudents in these programs will show 'N/A' for their college."
+                )
+            
+            warning_msg += "\n\nDo you want to continue?"
+            
+            reply = QMessageBox.question(
+                self,
+                "Confirm Delete",
+                warning_msg,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            
+            if reply == QMessageBox.StandardButton.Yes:
+                success, message = self.db_manager.delete_college(college['code'])
+                if success:
+                    QMessageBox.information(self, "Success", message)
+                    self.load_colleges_table()
+                    self.load_programs_table()  
+                    self.load_students_table() 
+                else:
+                    QMessageBox.critical(self, "Error", message)
+        except Exception as e:
+            print(f"Error in delete_college: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
 
     # ============= Program Operations ===================
 
@@ -1266,22 +1312,46 @@ class MainWindow(QMainWindow):
             self.load_students_table()
 
     def delete_program(self, program):
-        reply = QMessageBox.question(
-            self,
-            "Confirm Delete",
-            f"Are you sure you want to delete {program['name']} ({program['code']})?\n\n"
-            f"Warning: This may affect students enrolled in this program!",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-        )
-        
-        if reply == QMessageBox.StandardButton.Yes:
-            success, message = self.db_manager.delete_program(program['code'])
-            if success:
-                QMessageBox.information(self, "Success", message)
-                self.load_programs_table()
-                self.load_students_table()
-            else:
-                QMessageBox.critical(self, "Error", message)
+        try:
+            students = self.db_manager.get_all_students()
+            students_in_program = [s for s in students if s['program_code'] == program['code']]
+            
+            warning_msg = f"Are you sure you want to delete {program['name']} ({program['code']})?"
+            
+            if students_in_program:
+                student_list = '\n'.join([f"  • {s['firstname']} {s['lastname']} ({s['id']})" 
+                                        for s in students_in_program[:5]])
+                if len(students_in_program) > 5:
+                    student_list += f"\n  • ...and {len(students_in_program) - 5} more"
+                
+                warning_msg += (
+                    f"\n\n⚠️  WARNING: This program has {len(students_in_program)} enrolled student(s):"
+                    f"\n{student_list}"
+                    f"\n\nThese students will be updated to have 'N/A' as their program."
+                )
+            
+            warning_msg += "\n\nDo you want to continue?"
+            
+            reply = QMessageBox.question(
+                self,
+                "Confirm Delete",
+                warning_msg,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            
+            if reply == QMessageBox.StandardButton.Yes:
+                success, message = self.db_manager.delete_program(program['code'])
+                if success:
+                    QMessageBox.information(self, "Success", message)
+                    self.load_programs_table()
+                    self.load_students_table() 
+                else:
+                    QMessageBox.critical(self, "Error", message)
+        except Exception as e:
+            print(f"Error in delete_program: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
 
 
 if __name__ == "__main__":
