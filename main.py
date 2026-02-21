@@ -664,6 +664,7 @@ class MainWindow(QMainWindow):
 
         self.sortComboBox_2.currentTextChanged.connect(self.sort_students_by_dropdown)
         self.sortComboBox_3.currentTextChanged.connect(self.sort_programs_by_dropdown)
+        self.sortComboBox_4.currentTextChanged.connect(self.sort_colleges_by_dropdown)
 
         self.searchLineEdit_2.textChanged.connect(self.search_students)
         self.searchLineEdit_3.textChanged.connect(self.search_programs)
@@ -679,19 +680,21 @@ class MainWindow(QMainWindow):
         self.nextButtonColleges.clicked.connect(self.next_colleges_page)
     
     def sort_students_by_dropdown(self, sort_by):
-        table = self.dataTableStudents
         sort_mapping = {
-            'Program': 3,   
-            'Name': 2,      
-            'ID': 0,        
-            'College': 4,    
-            'Year' : 5      
+            'Program': 'program_name',   
+            'Lastname': 'lastname', 
+            'Firstname': 'firstname',     
+            'ID': 'id',        
+            'College': 'college_code',    
+            'Year' : 'year'      
         }
     
-        column = sort_mapping.get(sort_by)
-        if column is not None:
-            table.sortItems(column, Qt.SortOrder.AscendingOrder)
-    
+        key = sort_mapping.get(sort_by)
+        if key:
+            self.all_students.sort(key=lambda s: s.get(key, '').lower())
+            self.students_page = 1
+            self.load_students_table(refresh=False)
+
     def search_students(self, search_text):
         self.current_search_text = search_text
         self.students_page = 1
@@ -823,12 +826,12 @@ class MainWindow(QMainWindow):
     def prev_students_page(self):
         if self.students_page > 1:
             self.students_page -= 1
-            self.load_students_table()
+            self.load_students_table(refresh=False)
 
     def next_students_page(self):
         if self.students_page < self.students_total_pages:
             self.students_page += 1
-            self.load_students_table()
+            self.load_students_table(refresh=False)
 
     def update_students_pagination(self):
         self.pageInfoLabelStudents.setText(
@@ -853,12 +856,13 @@ class MainWindow(QMainWindow):
         
         return page_data, total_pages
 
-    def load_students_table(self):
+    def load_students_table(self, refresh=True):
         table = self.dataTableStudents
         table.setSortingEnabled(False)
         table.setRowCount(0)
         
-        self.all_students = self.db_manager.get_students_with_details()
+        if refresh:
+            self.all_students = self.db_manager.get_students_with_details()
     
         search_text = self.current_search_text.lower().strip()
         if search_text:
@@ -913,26 +917,36 @@ class MainWindow(QMainWindow):
         table.setColumnWidth(2, 100) 
 
         self.update_students_pagination()
-        table.setSortingEnabled(True)
 
     # ============ College Operations ============
+    def sort_colleges_by_dropdown(self, sort_by):
+        sort_mapping = { 
+            'College': 'name',   
+        }
+
+        key = sort_mapping.get(sort_by)
+        if key:
+            self.all_college.sort(key=lambda s: s.get(key, '').lower())
+            self.colleges_page = 1
+            self.load_colleges_table(refresh=True)
+
     def search_colleges(self, search_text):
         self.current_colleges_search_text = search_text
         self.colleges_page = 1
         self.load_colleges_table()    
 
-    
     def open_add_college_dialog(self):
         dialog = AddCollegeDialog(self.db_manager, self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self.load_colleges_table()
 
-    def load_colleges_table(self):
+    def load_colleges_table(self, refresh=True):
         table = self.dataTableColleges
         table.setSortingEnabled(False)
         table.setRowCount(0)
         
-        self.all_colleges = self.db_manager.get_all_colleges()
+        if refresh:
+            self.all_colleges = self.db_manager.get_all_colleges()
 
         search_text = self.current_colleges_search_text.lower().strip()
         if search_text:
@@ -964,7 +978,6 @@ class MainWindow(QMainWindow):
         header.setSectionResizeMode(2, header.ResizeMode.Fixed)  
         
         self.update_colleges_pagination()
-        table.setSortingEnabled(True)
 
     def add_action_buttons_college(self, row, college):
         button_widget = QWidget()
@@ -1055,12 +1068,12 @@ class MainWindow(QMainWindow):
     def prev_colleges_page(self):
         if self.colleges_page > 1:
             self.colleges_page -= 1
-            self.load_colleges_table()
+            self.load_colleges_table(refresh=False)
 
     def next_colleges_page(self):
         if self.colleges_page < self.colleges_total_pages:
             self.colleges_page += 1
-            self.load_colleges_table()
+            self.load_colleges_table(refresh=False)
 
     def edit_college(self, college):
         dialog = AddCollegeDialog(self.db_manager, self, college_data=college)
@@ -1088,18 +1101,16 @@ class MainWindow(QMainWindow):
     # ============= Program Operations ===================
 
     def sort_programs_by_dropdown(self, sort_by):
-        """Sort students table based on dropdown selection"""
-        table = self.dataTablePrograms
-    
-       
         sort_mapping = {
-            'Program': 0,   
-            'College': 2,   
+            'Program': 'name',   
+            'College': 'college',   
         }
-    
-        column = sort_mapping.get(sort_by)
-        if column is not None:
-            table.sortItems(column, Qt.SortOrder.AscendingOrder)
+
+        key = sort_mapping.get(sort_by)
+        if key:
+            self.all_programs.sort(key=lambda s: s.get(key, '').lower())
+            self.programs_page = 1
+            self.load_programs_table(refresh=False)
     
     def search_programs(self, search_text):
         self.current_programs_search_text = search_text
@@ -1111,12 +1122,13 @@ class MainWindow(QMainWindow):
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self.load_programs_table()
     
-    def load_programs_table(self):
+    def load_programs_table(self, refresh=True):
         table = self.dataTablePrograms
         table.setSortingEnabled(False)
         table.setRowCount(0)
         
-        self.all_programs = self.db_manager.get_all_programs()
+        if refresh:
+            self.all_programs = self.db_manager.get_all_programs()
 
         search_text = self.current_programs_search_text.lower().strip()
         if search_text:
@@ -1152,7 +1164,6 @@ class MainWindow(QMainWindow):
         header.setSectionResizeMode(3, header.ResizeMode.Fixed)  
 
         self.update_programs_pagination()
-        table.setSortingEnabled(True)
     
     def add_action_buttons_program(self, row, program):
         button_widget = QWidget()
@@ -1241,12 +1252,12 @@ class MainWindow(QMainWindow):
     def prev_programs_page(self):
         if self.programs_page > 1:
             self.programs_page -= 1
-            self.load_programs_table()
+            self.load_programs_table(refresh=False)
 
     def next_programs_page(self):
         if self.programs_page < self.programs_total_pages:
             self.programs_page += 1
-            self.load_programs_table()
+            self.load_programs_table(refresh=False)
 
     def edit_program(self, program):
         dialog = AddProgramDialog(self.db_manager, self, program_data=program)

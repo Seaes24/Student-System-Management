@@ -111,7 +111,7 @@
       <item>
        <widget class="QStackedWidget" name="stackedWidget">
         <property name="currentIndex">
-         <number>1</number>
+         <number>2</number>
         </property>
         <widget class="QWidget" name="studentsPage">
          <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -194,7 +194,12 @@
                </item>
                <item>
                 <property name="text">
-                 <string>Name</string>
+                 <string>Lastname</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Firstname</string>
                 </property>
                </item>
                <item>
@@ -694,6 +699,28 @@
                <property name="placeholderText">
                 <string>🔍 Search...</string>
                </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label">
+               <property name="text">
+                <string>Sort by:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="sortComboBox_4">
+               <property name="minimumSize">
+                <size>
+                 <width>150</width>
+                 <height>40</height>
+                </size>
+               </property>
+               <item>
+                <property name="text">
+                 <string>College</string>
+                </property>
+               </item>
               </widget>
              </item>
              <item>
