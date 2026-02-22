@@ -1,5 +1,5 @@
 code,name,college
-BALCS,Bachelor of Arts in Literary and Cultural Studies,N/A
+BALCS,Bachelor of Arts in Literary and Cultural Studies,CASS
 BAFIL,Bachelor of Arts in Filipino,N/A
 BAHIS,Bachelor of Arts in History,N/A
 BAPAN,Bachelor of Arts in Panitikan,N/A
@@ -53,3 +53,4 @@ BSCHEM,Bachelor of Science in Chemistry,CSM
 BSPHY,Bachelor of Science in Physics,CSM
 BSMAT,Bachelor of Science in Mathematics,CSM
 BSSTAT,Bachelor of Science in Statistics,CSM
+BSAT,Bachelor of Science in Aeronotics,CSM

@@ -1,7 +1,7 @@
 id,firstname,lastname,program_code,year,gender
-2024-9999,Test,User,BSCS,1,Male
+2024-9999,Test,User,BSBIO-BOT,1,Male
 2027-9999,John,Smith,BSCE,1,Male
-2023-0008,Kim,Chiu,N/A,1,Female
+2023-0008,Kim,Chiu,BSA,1,Female
 2023-0022,Arthur,Kim,N/A,1,Male
 2023-0002,Lit,Romania,BSCS,5,Male
 2020-0012,Kythe,Florence,BSCA,3,Male
@@ -18,7 +18,6 @@ id,firstname,lastname,program_code,year,gender
 2024-0210,Maria,Lopez,BSED-MAT,2,Female
 2024-0211,Joshua,Torres,BSCPE,1,Male
 2024-0212,Alyssa,Flores,BSIS,3,Female
-2024-0213,Patrick,Gonzales,BSCS,2,Male
 2024-0214,Shane,Rivera,BSBA-MM,1,Female
 2024-0215,Ethan,Castro,BSME,4,Male
 2024-0216,Carla,Domingo,BSN,2,Female
@@ -106,3 +105,6 @@ id,firstname,lastname,program_code,year,gender
 2024-0298,Lovelyn,Salazar,BAPSYCH,3,Female
 2024-0299,Anthony,Bernardo,BSME,1,Male
 2024-0300,Kristine,Flores,BSED-MAT,2,Female
+2023-9990,Ravi Kylo,Smith,BPE,1,Male
+2024-0812,Artuur,Neru,BETMET,2,Male
+2024-0811,Arthur,User,BETMET,5,Male

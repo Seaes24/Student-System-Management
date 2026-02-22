@@ -52,68 +52,26 @@ class ProgramValidator:
     
     @staticmethod
     def validate_program_code(code):
-        """Format: 4-10 uppercase letters also accepts 1 hyphen"""
-
+        """Format: 2-100 uppercase letters"""
         if not code:
             return False, "Program code is required"
-        
-        hyphen_count = code.count('-')
-        
-        if hyphen_count > 1:
-            return False, "Only one hyphen allowed"
-        
-        letters_only = code.replace('-', '')
-        
-        if not letters_only.isalpha() or not letters_only.isupper():
-            return False, "Only uppercase letters allowed (A-Z)"
-        
-        if not 4 <= len(letters_only) <= 10:
-            return False, f"Must contain 4-10 letters (currently {len(letters_only)})"
-        
-        if hyphen_count == 1:
-            if code.startswith('-') or code.endswith('-'):
-                return False, "Hyphen cannot be at start or end"
-        
-        return True, "Valid"
+        pattern = r'^[A-Z]{2,100}$'
+        is_valid = bool(re.match(pattern, code))
+        return is_valid, "Valid" if is_valid else "Invalid format (use 2-100 uppercase letters)"
     
     @staticmethod
     def validate_program_name(name):
+        """Validate program name"""
         if not name:
             return False, "Program name is required"
         
         if not name.strip():
             return False, "Program name cannot be empty"
         
-        name = ' '.join(name.split())
+        if len(name.strip()) < 10:
+            return False, "Program name must be at least 10 characters long"
         
-        if len(name) < 10:
-            return False, "Program name is too short"
-        if len(name) > 200:
-            return False, "Program name is too long"
-        
-        lowercase_words = {
-            'a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
-            'of', 'with', 'by', 'from'
-        }
-        
-        words = name.split()
-        
-        for i, word in enumerate(words):
-            if not all(c.isalpha() or c in "'- " for c in word):
-                return False, f"Invalid character in '{word}'"
-            
-            if i == 0:
-                if not word[0].isupper():
-                    return False, f"First word '{word}' must start with capital letter"
-            else:
-                if word.lower() in lowercase_words:
-                    if word != word.lower():
-                        return False, f"'{word}' should be lowercase"
-                else:
-                    if not word[0].isupper():
-                        return False, f"'{word}' should start with capital letter"
-        
-        return True, "Valid program name"
+        return True, "Valid"
     
     @staticmethod
     def check_duplicate_code(db_manager, code, current_code=None):
@@ -133,12 +91,12 @@ class CollegeValidator:
     
     @staticmethod
     def validate_college_code(code):
-        """Format: 2-5 uppercase letters"""
+        """Format: 2-100 uppercase letters"""
         if not code:
             return False, "College code is required"
-        pattern = r'^[A-Z]{2,5}$'
+        pattern = r'^[A-Z]{2,100}$'
         is_valid = bool(re.match(pattern, code))
-        return is_valid, "Valid" if is_valid else "Invalid format (use 2-5 uppercase letters)"
+        return is_valid, "Valid" if is_valid else "Invalid format (use 2-10 uppercase letters)"
     
     @staticmethod
     def validate_college_name(name):

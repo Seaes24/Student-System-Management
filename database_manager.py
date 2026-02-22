@@ -193,14 +193,17 @@ class DatabaseManager:
             return False, f"Error deleting student: {str(e)}"
     # ========== PROGRAM OPERATIONS ==========
     def get_all_programs(self):
-        programs = []
-        if os.path.exists(self.programs_file):
-            with open(self.programs_file, 'r', encoding='utf-8') as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    programs.append(row)
-        return programs
-    
+            if self._programs_cache is None:
+                programs = []
+                if os.path.exists(self.programs_file):
+                    with open(self.programs_file, 'r', encoding='utf-8') as f:
+                        reader = csv.DictReader(f)
+                        for row in reader:
+                            programs.append(row)
+                self._programs_cache = programs
+            
+            return self._programs_cache
+        
     def get_program_by_code(self, code):
         programs = self.get_programs_cached()  
         for program in programs:
@@ -407,6 +410,7 @@ class DatabaseManager:
             
             search_code = old_code if old_code else college_data['code']
             college_found = False
+            programs_updated = 0
             
             for i, college in enumerate(colleges):
                 if college['code'] == search_code:
@@ -442,7 +446,7 @@ class DatabaseManager:
                 writer.writeheader()
                 writer.writerows(colleges)
             
-            self._refresh_cache()
+            self._colleges_cache = None
             
             message = f"College {college_data['name']} updated successfully!"
             if old_code and old_code != college_data['code']:

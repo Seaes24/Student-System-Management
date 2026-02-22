@@ -222,7 +222,7 @@ QFrame#sidebarFrame QPushButton:checked {
       <item>
        <widget class="QStackedWidget" name="stackedWidget">
         <property name="currentIndex">
-         <number>1</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="studentsPage">
          <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -983,28 +983,6 @@ QPushButton:disabled {
                <property name="placeholderText">
                 <string>🔍 Search...</string>
                </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="label">
-               <property name="text">
-                <string>Sort by:</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QComboBox" name="sortComboBox_4">
-               <property name="minimumSize">
-                <size>
-                 <width>150</width>
-                 <height>40</height>
-                </size>
-               </property>
-               <item>
-                <property name="text">
-                 <string>College</string>
-                </property>
-               </item>
               </widget>
              </item>
              <item>

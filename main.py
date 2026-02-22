@@ -331,7 +331,7 @@ class AddCollegeDialog(QDialog):
         
     def create_collegecode_field(self, layout):
         collegecode_layout = QHBoxLayout()
-        collegecode_layout.addWidget(QLabel("College Code (2-5 letters):*"))
+        collegecode_layout.addWidget(QLabel("College Code:*"))
         self.collegecode_input = QLineEdit()
         self.collegecode_input.setPlaceholderText("CCS")
         collegecode_layout.addWidget(self.collegecode_input)
@@ -488,7 +488,7 @@ class AddProgramDialog(QDialog):
         
     def create_programcode_field(self, layout):
         programcode_layout = QHBoxLayout()
-        programcode_layout.addWidget(QLabel("Program Code (3-10 letters):*"))
+        programcode_layout.addWidget(QLabel("Program Code:*"))
         self.programcode_input = QLineEdit()
         self.programcode_input.setPlaceholderText("BSCS")
         programcode_layout.addWidget(self.programcode_input)
@@ -684,7 +684,6 @@ class MainWindow(QMainWindow):
 
         self.sortComboBox_2.currentTextChanged.connect(self.sort_students_by_dropdown)
         self.sortComboBox_3.currentTextChanged.connect(self.sort_programs_by_dropdown)
-        self.sortComboBox_4.currentTextChanged.connect(self.sort_colleges_by_dropdown)
 
         self.searchLineEdit_2.textChanged.connect(self.search_students)
         self.searchLineEdit_3.textChanged.connect(self.search_programs)
@@ -939,15 +938,18 @@ class MainWindow(QMainWindow):
 
     # ============ College Operations ============
     def sort_colleges_by_dropdown(self, sort_by):
+        print(f"COLLEGE SORT CALLED: {sort_by}")
+        print(f"all_colleges count: {len(self.all_colleges)}")
+
         sort_mapping = { 
             'College': 'name',   
         }
 
         key = sort_mapping.get(sort_by)
         if key:
-            self.all_college.sort(key=lambda s: s.get(key, '').lower())
+            self.all_colleges.sort(key=lambda s: s.get(key, '').lower())
             self.colleges_page = 1
-            self.load_colleges_table(refresh=True)
+            self.load_colleges_table(refresh=False)
 
     def search_colleges(self, search_text):
         self.current_colleges_search_text = search_text
@@ -966,6 +968,8 @@ class MainWindow(QMainWindow):
         
         if refresh:
             self.all_colleges = self.db_manager.get_all_colleges()
+        
+        self.all_colleges.sort(key=lambda c: c.get('name', '').lower())
 
         search_text = self.current_colleges_search_text.lower().strip()
         if search_text:
@@ -1097,7 +1101,11 @@ class MainWindow(QMainWindow):
     def edit_college(self, college):
         dialog = AddCollegeDialog(self.db_manager, self, college_data=college)
         if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.db_manager._programs_cache = None
+            self.db_manager._colleges_cache = None
+
             self.load_colleges_table()
+            self.load_programs_table()
             self.load_students_table()
 
     def delete_college(self, college):
@@ -1173,6 +1181,7 @@ class MainWindow(QMainWindow):
         table.setRowCount(0)
         
         if refresh:
+            self.db_manager._programs_cache = None
             self.all_programs = self.db_manager.get_all_programs()
 
         search_text = self.current_programs_search_text.lower().strip()
