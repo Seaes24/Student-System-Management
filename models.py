@@ -55,10 +55,10 @@ class ProgramValidator:
         """Format: 2-100 uppercase letters"""
         if not code:
             return False, "Program code is required"
-        pattern = r'^[A-Z]{2,100}$'
+        pattern = r'^[A-Z]+$'
         is_valid = bool(re.match(pattern, code))
-        return is_valid, "Valid" if is_valid else "Invalid format (use 2-100 uppercase letters)"
-    
+        return is_valid, "Valid" if is_valid else "Invalid format (use uppercase letters)"
+     
     @staticmethod
     def validate_program_name(name):
         """Validate program name"""
@@ -67,9 +67,6 @@ class ProgramValidator:
         
         if not name.strip():
             return False, "Program name cannot be empty"
-        
-        if len(name.strip()) < 10:
-            return False, "Program name must be at least 10 characters long"
         
         return True, "Valid"
     
@@ -94,9 +91,9 @@ class CollegeValidator:
         """Format: 2-100 uppercase letters"""
         if not code:
             return False, "College code is required"
-        pattern = r'^[A-Z]{2,100}$'
+        pattern = r'^[A-Z]+$'
         is_valid = bool(re.match(pattern, code))
-        return is_valid, "Valid" if is_valid else "Invalid format (use 2-10 uppercase letters)"
+        return is_valid, "Valid" if is_valid else "Invalid format (use uppercase letters)"
     
     @staticmethod
     def validate_college_name(name):

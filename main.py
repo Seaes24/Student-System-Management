@@ -16,6 +16,7 @@ class AddStudentDialog(QDialog):
         self.db_manager = db_manager
         self.student_data = student_data
         self.is_edit_mode = student_data is not None
+        self.original_id = student_data['id'] if student_data else None
         
         self.setWindowTitle("Edit Student" if self.is_edit_mode else "Add New Student")
         self.setModal(True)
@@ -40,6 +41,9 @@ class AddStudentDialog(QDialog):
         self.create_year_field(layout)
         self.create_gender_field(layout)
         
+        if not hasattr(self, 'program_data'):
+            self.program_data = {}
+
         layout.addSpacing(20)
         self.create_buttons(layout)
         
@@ -50,10 +54,6 @@ class AddStudentDialog(QDialog):
         id_layout.addWidget(QLabel("Student ID (YYYY-NNNN):*"))
         self.id_input = QLineEdit()
         self.id_input.setPlaceholderText("2024-0001")
-        
-        if self.is_edit_mode:
-            self.id_input.setReadOnly(True)
-            self.id_input.setStyleSheet("background-color: #f0f0f0;")
         
         id_layout.addWidget(self.id_input)
         layout.addLayout(id_layout)
@@ -83,10 +83,6 @@ class AddStudentDialog(QDialog):
         self.program_combo.setMinimumWidth(350)
         
         display_texts = [item['display'] for item in self.program_display_list]
-
-        if 'N/A' not in display_texts:
-            display_texts.insert(0, 'N/A')
-
         self.program_combo.addItems(display_texts)
         
         completer = QCompleter(display_texts)
@@ -95,9 +91,7 @@ class AddStudentDialog(QDialog):
         completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
         self.program_combo.setCompleter(completer)
         
-
         self.program_data = {item['display']: item for item in self.program_display_list}
-        self.program_data['N/A'] = {'code': 'N/A', 'name': 'N/A', 'college': 'N/A'}
         
         program_layout.addWidget(self.program_combo)
         layout.addLayout(program_layout)
@@ -149,7 +143,6 @@ class AddStudentDialog(QDialog):
         self.firstname_input.setText(self.student_data['firstname'])
         self.lastname_input.setText(self.student_data['lastname'])
         
-        # Set program - find matching display text
         program_name = self.student_data.get('program_name', '')
         for i in range(self.program_combo.count()):
             if program_name in self.program_combo.itemText(i):
@@ -168,6 +161,9 @@ class AddStudentDialog(QDialog):
     def get_selected_program_code(self):
         selected_text = self.program_combo.currentText().strip()
         
+        if selected_text == 'N/A':
+            return 'N/A'
+    
         if selected_text in self.program_data:
             return self.program_data[selected_text]['code']
         
@@ -176,7 +172,7 @@ class AddStudentDialog(QDialog):
                 return data['code']
         
         return None
-    
+        
     def validate_student_data(self, student_data):
     
         # Validate Student ID
@@ -185,6 +181,31 @@ class AddStudentDialog(QDialog):
             QMessageBox.warning(self, "Validation Error", message)
             self.id_input.setFocus()
             return False
+        
+        if self.is_edit_mode:
+            # If ID is different from original, check for duplicates
+            if student_data['id'] != self.original_id:
+                students = self.db_manager.get_all_students()
+                for student in students:
+                    if student['id'] == student_data['id']:
+                        QMessageBox.warning(
+                            self, 
+                            "Validation Error", 
+                            f"Student ID {student_data['id']} already exists in the database."
+                        )
+                        self.id_input.setFocus()
+                        return False
+        else:
+            students = self.db_manager.get_all_students()
+            for student in students:
+                if student['id'] == student_data['id']:
+                    QMessageBox.warning(
+                        self, 
+                        "Validation Error", 
+                        f"Student ID {student_data['id']} already exists in the database."
+                    )
+                    self.id_input.setFocus()
+                    return False
         
         # Modify program validation to accept 'N/A'
         if student_data['program_code'] == 'N/A':
@@ -253,39 +274,60 @@ class AddStudentDialog(QDialog):
         }
     
     def save_student(self):
-        # Validate and save the student
-        student_data = self.get_student_data()
-        
-        if not self.validate_student_data(student_data):
-            return
-        
-        program_display = self.program_combo.currentText()
-        action = "update" if self.is_edit_mode else "add"
-        confirm_msg = (
-            f"Are you sure you want to {action} this student?\n\n"
-            f"Student ID: {student_data['id']}\n"
-            f"Name: {student_data['lastname']}, {student_data['firstname']}\n"
-            f"Program: {program_display}\n"
-            f"Year: {student_data['year']}\n"
-            f"Gender: {student_data['gender']}"
-        )
-        
-        reply = QMessageBox.question(
-            self, f"Confirm {action.title()}", confirm_msg,
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-        )
-        
-        if reply == QMessageBox.StandardButton.Yes:
-            if self.is_edit_mode:
-                success, message = self.db_manager.update_student(student_data)
-            else:
-                success, message = self.db_manager.add_student(student_data)
+        try:
+            # Validate and save the student
+            student_data = self.get_student_data()
             
-            if success:
-                QMessageBox.information(self, "Success", message)
-                self.accept()
+            if not self.validate_student_data(student_data):
+                return
+            
+            program_display = self.program_combo.currentText()
+            action = "update" if self.is_edit_mode else "add"
+            
+            if self.is_edit_mode and student_data['id'] != self.original_id:
+                confirm_msg = (
+                    f"⚠️  You are changing the student ID!\n\n"
+                    f"Old ID: {self.original_id}\n"
+                    f"New ID: {student_data['id']}\n"
+                    f"Name: {student_data['lastname']}, {student_data['firstname']}\n"
+                    f"Program: {program_display}\n"
+                    f"Year: {student_data['year']}\n"
+                    f"Gender: {student_data['gender']}\n\n"
+                    f"Are you sure you want to continue?"
+                )
             else:
-                QMessageBox.critical(self, "Error", message)
+                confirm_msg = (
+                    f"Are you sure you want to {action} this student?\n\n"
+                    f"Student ID: {student_data['id']}\n"
+                    f"Name: {student_data['lastname']}, {student_data['firstname']}\n"
+                    f"Program: {program_display}\n"
+                    f"Year: {student_data['year']}\n"
+                    f"Gender: {student_data['gender']}"
+                )
+            
+            reply = QMessageBox.question(
+                self, f"Confirm {action.title()}", confirm_msg,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            
+            if reply == QMessageBox.StandardButton.Yes:
+                
+                if self.is_edit_mode:
+                    success, message = self.db_manager.update_student(student_data, self.original_id)
+                else:
+                    success, message = self.db_manager.add_student(student_data)
+                
+                if success:
+                    QMessageBox.information(self, "Success", message)
+                    self.accept()
+                else:
+                    QMessageBox.critical(self, "Error", message)
+        
+        except Exception as e:
+            print(f"ERROR in save_student: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            QMessageBox.critical(self, "Unexpected Error", f"An unexpected error occurred:\n{str(e)}")
 
 
 class AddCollegeDialog(QDialog):
@@ -691,12 +733,19 @@ class MainWindow(QMainWindow):
 
         self.prevButtonStudents.clicked.connect(self.prev_students_page)
         self.nextButtonStudents.clicked.connect(self.next_students_page)
+        self.jumpStartStudent.clicked.connect(self.jump_to_firststudent_page)
+        self.jumpEndStudent.clicked.connect(self.jump_to_endstudent_page)
+        
         
         self.prevButtonPrograms.clicked.connect(self.prev_programs_page)
         self.nextButtonPrograms.clicked.connect(self.next_programs_page)
+        self.jumpStartProgram.clicked.connect(self.jump_to_firstprogram_page)
+        self.jumpEndProgram.clicked.connect(self.jump_to_endprogram_page)
         
         self.prevButtonColleges.clicked.connect(self.prev_colleges_page)
         self.nextButtonColleges.clicked.connect(self.next_colleges_page)
+        self.jumpStartCollege.clicked.connect(self.jump_to_firstcollege_page)
+        self.jumpEndCollege.clicked.connect(self.jump_to_endcollege_page)
     
     def sort_students_by_dropdown(self, sort_by):
         sort_mapping = {
@@ -840,7 +889,7 @@ class MainWindow(QMainWindow):
         button_widget.setLayout(button_layout)
         
         self.dataTableStudents.setCellWidget(row, 7, button_widget)
-    
+
     def prev_students_page(self):
         if self.students_page > 1:
             self.students_page -= 1
@@ -856,9 +905,20 @@ class MainWindow(QMainWindow):
             f"Page {self.students_page} of {self.students_total_pages}"
         )
         self.prevButtonStudents.setEnabled(self.students_page > 1)
-        self.nextButtonStudents.setEnabled(
-            self.students_page < self.students_total_pages
-        )
+        self.jumpStartStudent.setEnabled(self.students_page > 1)
+
+        self.nextButtonStudents.setEnabled(self.students_page < self.students_total_pages)
+        self.jumpEndStudent.setEnabled(self.students_page < self.students_total_pages)
+    
+    def jump_to_firststudent_page(self):
+        if self.students_page > 1:
+            self.students_page = 1
+            self.load_students_table(refresh=False)
+
+    def jump_to_endstudent_page(self):
+        if self.students_page != self.students_total_pages:
+            self.students_page = self.students_total_pages
+            self.load_students_table(refresh=False)
     
     def get_page_data(self, all_data, current_page, per_page):
         import math
@@ -1086,7 +1146,20 @@ class MainWindow(QMainWindow):
             f"Page {self.colleges_page} of {self.colleges_total_pages}"
         )
         self.prevButtonColleges.setEnabled(self.colleges_page > 1)
+        self.jumpStartCollege.setEnabled(self.colleges_page > 1)
+
         self.nextButtonColleges.setEnabled(self.colleges_page < self.colleges_total_pages)
+        self.jumpEndCollege.setEnabled(self.colleges_page < self.colleges_total_pages)
+    
+    def jump_to_firstcollege_page(self):
+        if self.colleges_page > 1:
+            self.colleges_page = 1
+            self.load_colleges_table(refresh=False)
+    
+    def jump_to_endcollege_page(self):
+         if self.colleges_page != self.colleges_total_pages:
+            self.colleges_page = self.colleges_total_pages
+            self.load_colleges_table(refresh=False)
 
     def prev_colleges_page(self):
         if self.colleges_page > 1:
@@ -1301,7 +1374,20 @@ class MainWindow(QMainWindow):
             f"Page {self.programs_page} of {self.programs_total_pages}"
         )
         self.prevButtonPrograms.setEnabled(self.programs_page > 1)
+        self.jumpStartProgram.setEnabled(self.programs_page > 1)
+
         self.nextButtonPrograms.setEnabled(self.programs_page < self.programs_total_pages)
+        self.jumpEndProgram.setEnabled(self.programs_page < self.programs_total_pages)
+    
+    def jump_to_firstprogram_page(self):
+        if self.programs_page > 1:
+            self.programs_page = 1
+            self.load_programs_table(refresh=False)
+
+    def jump_to_endprogram_page(self):
+        if self.programs_page != self.programs_total_pages:
+            self.programs_page = self.programs_total_pages
+            self.load_programs_table(refresh=False)
 
     def prev_programs_page(self):
         if self.programs_page > 1:

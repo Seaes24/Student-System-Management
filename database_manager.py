@@ -23,7 +23,7 @@ class DatabaseManager:
     def _load_cache(self):
         self._programs_cache = self.get_all_programs()
         self._colleges_cache = self.get_all_colleges()
-        print(f"Cache loaded: {len(self._programs_cache)} programs, {len(self._colleges_cache)} colleges")
+        # print(f"Cache loaded: {len(self._programs_cache)} programs, {len(self._colleges_cache)} colleges")
     
     def _refresh_cache(self):
         self._load_cache()
@@ -123,16 +123,26 @@ class DatabaseManager:
             students.remove(student_data)
             return False, f"Error saving student: {str(e)}"
     
-    def update_student(self, student_data):
+    def update_student(self, student_data, original_id=None):
         try:
-            students = self.get_all_students()
             
+            students = self.get_all_students()
+
             if not students:
                 return False, "No students found in database"
             
+            search_id = original_id if original_id else student_data['id']
+            
             student_found = False
+            
+            if original_id and original_id != student_data['id']:
+                for student in students:
+                    if student['id'] == student_data['id']:
+                        return False, f"Student ID {student_data['id']} already exists in the database"
+            
             for i, student in enumerate(students):
-                if student['id'] == student_data['id']:
+                if student['id'] == search_id:
+                    print(f"Found student at index {i}")
                     students[i] = {
                         'id': student_data['id'],
                         'firstname': student_data['firstname'],
@@ -145,17 +155,25 @@ class DatabaseManager:
                     break
             
             if not student_found:
-                return False, f"Student with ID {student_data['id']} not found"
+                return False, f"Student with ID {search_id} not found"
+            
             
             with open(self.students_file, 'w', newline='', encoding='utf-8') as f:
                 fieldnames = ['id', 'firstname', 'lastname', 'program_code', 'year', 'gender']
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
                 writer.writeheader()
                 writer.writerows(students)
+        
             
-            return True, f"Student {student_data['firstname']} {student_data['lastname']} updated successfully!"
+            if original_id and original_id != student_data['id']:
+                return True, f"Student {student_data['firstname']} {student_data['lastname']} updated successfully!\nID changed from {original_id} to {student_data['id']}"
+            else:
+                return True, f"Student {student_data['firstname']} {student_data['lastname']} updated successfully!"
         
         except Exception as e:
+            print(f"ERROR in update_student: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return False, f"Error updating student: {str(e)}"
     
     def delete_student(self, student_id):

@@ -1,13 +1,12 @@
 code,name,college
-BALCS,Bachelor of Arts in Literary and Cultural Studies,CASS
-BAFIL,Bachelor of Arts in Filipino,N/A
-BAHIS,Bachelor of Arts in History,N/A
-BAPAN,Bachelor of Arts in Panitikan,N/A
-BAPOLSCI,Bachelor of Arts in Political Science,N/A
-BAPSYCH,Bachelor of Arts in Psychology,N/A
-BASOCIO,Bachelor of Arts in Sociology,N/A
-BAPHILO,Bachelor of Science in Philosophy Applied Ethics,N/A
-BSPSYCH,Bachelor of Science in Psychology,N/A
+BAFIL,Bachelor of Arts in Filipino,CASS
+BAHIS,Bachelor of Arts in History,CASS
+BAPAN,Bachelor of Arts in Panitikan,CASS
+BAPOLSCI,Bachelor of Arts in Political Science,CASS
+BAPSYCH,Bachelor of Arts in Psychology,CASS
+BASOCIO,Bachelor of Arts in Sociology,CASS
+BAPHILO,Bachelor of Science in Philosophy Applied Ethics,CASS
+BSPSYCH,Bachelor of Science in Psychology,CASS
 BSCS,Bachelor of Science in Computer Science,CCS
 BSIS,Bachelor of Science in Information System,CCS
 BSIT,Bachelor of Science in Information Technology,CCS

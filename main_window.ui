@@ -174,7 +174,7 @@ QFrame#sidebarFrame QPushButton:checked {
           <string>Programs</string>
          </property>
          <property name="checkable">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
         </widget>
        </item>
@@ -197,7 +197,7 @@ QFrame#sidebarFrame QPushButton:checked {
           <string>Colleges</string>
          </property>
          <property name="checkable">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
         </widget>
        </item>
@@ -222,7 +222,7 @@ QFrame#sidebarFrame QPushButton:checked {
       <item>
        <widget class="QStackedWidget" name="stackedWidget">
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="studentsPage">
          <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -446,6 +446,34 @@ QTableWidget::item:selected {
              <number>5</number>
             </property>
             <item>
+             <widget class="QPushButton" name="jumpStartStudent">
+              <property name="styleSheet">
+               <string notr="true">QPushButton {
+    background-color: white;
+    border: 1px solid #CBD5E1;
+    padding: 6px 14px;
+    border-radius: 8px;
+    color: #0F172A;
+}
+
+QPushButton:hover,
+QPushButton:hover {
+    background-color: #F1F5F9;
+}
+
+QPushButton:disabled,
+QPushButton:disabled {
+    background-color: #F8FAFC;
+    color: #94A3B8;
+    border: 1px solid #E2E8F0;
+}</string>
+              </property>
+              <property name="text">
+               <string>Jump to Start</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <spacer name="horizontalSpacer">
               <property name="orientation">
                <enum>Qt::Orientation::Horizontal</enum>
@@ -600,11 +628,60 @@ QPushButton:disabled {
               </property>
              </spacer>
             </item>
+            <item>
+             <widget class="QPushButton" name="jumpEndStudent">
+              <property name="styleSheet">
+               <string notr="true">QPushButton {
+    background-color: white;
+    border: 1px solid #CBD5E1;
+    padding: 6px 14px;
+    border-radius: 8px;
+    color: #0F172A;
+}
+
+QPushButton:hover,
+QPushButton:hover {
+    background-color: #F1F5F9;
+}
+
+QPushButton:disabled,
+QPushButton:disabled {
+    background-color: #F8FAFC;
+    color: #94A3B8;
+    border: 1px solid #E2E8F0;
+}</string>
+              </property>
+              <property name="text">
+               <string>Jump to End</string>
+              </property>
+             </widget>
+            </item>
            </layout>
           </item>
          </layout>
         </widget>
         <widget class="QWidget" name="programsPage">
+         <property name="styleSheet">
+          <string notr="true">QPushButton#prevButtonPrograms {
+    background-color: white;
+    border: 1px solid #CBD5E1;
+    padding: 6px 14px;
+    border-radius: 8px;
+    color: #0F172A;
+}
+
+QPushButton:hover,
+QPushButton:hover {
+    background-color: #F1F5F9;
+}
+
+QPushButton:disabled,
+QPushButton:disabled {
+    background-color: #F8FAFC;
+    color: #94A3B8;
+    border: 1px solid #E2E8F0;
+}</string>
+         </property>
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <property name="leftMargin">
            <number>9</number>
@@ -794,6 +871,34 @@ QTableWidget::item:selected {
              <number>5</number>
             </property>
             <item>
+             <widget class="QPushButton" name="jumpStartProgram">
+              <property name="styleSheet">
+               <string notr="true">QPushButton {
+    background-color: white;
+    border: 1px solid #CBD5E1;
+    padding: 6px 14px;
+    border-radius: 8px;
+    color: #0F172A;
+}
+
+QPushButton:hover,
+QPushButton:hover {
+    background-color: #F1F5F9;
+}
+
+QPushButton:disabled,
+QPushButton:disabled {
+    background-color: #F8FAFC;
+    color: #94A3B8;
+    border: 1px solid #E2E8F0;
+}</string>
+              </property>
+              <property name="text">
+               <string>Jump to Start</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <spacer name="horizontalSpacer_5">
               <property name="orientation">
                <enum>Qt::Orientation::Horizontal</enum>
@@ -830,7 +935,7 @@ QPushButton:disabled {
 }</string>
               </property>
               <property name="text">
-               <string>Prev</string>
+               <string>Previous</string>
               </property>
              </widget>
             </item>
@@ -914,6 +1019,34 @@ QPushButton:disabled {
                </size>
               </property>
              </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="jumpEndProgram">
+              <property name="styleSheet">
+               <string notr="true">QPushButton {
+    background-color: white;
+    border: 1px solid #CBD5E1;
+    padding: 6px 14px;
+    border-radius: 8px;
+    color: #0F172A;
+}
+
+QPushButton:hover,
+QPushButton:hover {
+    background-color: #F1F5F9;
+}
+
+QPushButton:disabled,
+QPushButton:disabled {
+    background-color: #F8FAFC;
+    color: #94A3B8;
+    border: 1px solid #E2E8F0;
+}</string>
+              </property>
+              <property name="text">
+               <string>Jump to End</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
@@ -1081,6 +1214,34 @@ QTableWidget::item:selected {
              <number>5</number>
             </property>
             <item>
+             <widget class="QPushButton" name="jumpStartCollege">
+              <property name="styleSheet">
+               <string notr="true">QPushButton {
+    background-color: white;
+    border: 1px solid #CBD5E1;
+    padding: 6px 14px;
+    border-radius: 8px;
+    color: #0F172A;
+}
+
+QPushButton:hover,
+QPushButton:hover {
+    background-color: #F1F5F9;
+}
+
+QPushButton:disabled,
+QPushButton:disabled {
+    background-color: #F8FAFC;
+    color: #94A3B8;
+    border: 1px solid #E2E8F0;
+}</string>
+              </property>
+              <property name="text">
+               <string>Jump to Start</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <spacer name="horizontalSpacer_9">
               <property name="orientation">
                <enum>Qt::Orientation::Horizontal</enum>
@@ -1117,7 +1278,7 @@ QPushButton:disabled {
 }</string>
               </property>
               <property name="text">
-               <string>Prev</string>
+               <string>Previous</string>
               </property>
              </widget>
             </item>
@@ -1194,6 +1355,34 @@ QPushButton:disabled {
                </size>
               </property>
              </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="jumpEndCollege">
+              <property name="styleSheet">
+               <string notr="true">QPushButton {
+    background-color: white;
+    border: 1px solid #CBD5E1;
+    padding: 6px 14px;
+    border-radius: 8px;
+    color: #0F172A;
+}
+
+QPushButton:hover,
+QPushButton:hover {
+    background-color: #F1F5F9;
+}
+
+QPushButton:disabled,
+QPushButton:disabled {
+    background-color: #F8FAFC;
+    color: #94A3B8;
+    border: 1px solid #E2E8F0;
+}</string>
+              </property>
+              <property name="text">
+               <string>Jump to End</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
