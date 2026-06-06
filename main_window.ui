@@ -1119,6 +1119,33 @@ QPushButton:disabled {
               </widget>
              </item>
              <item>
+            <widget class="QLabel" name="sortLabel_4">
+                <property name="text">
+                    <string>Sort by:</string>
+                </property>
+            </widget>
+            </item>
+            <item>
+                <widget class="QComboBox" name="sortComboBox_4">
+                <property name="minimumSize">
+                    <size>
+                        <width>150</width>
+                        <height>40</height>
+                    </size>
+                </property>
+            <item>
+            <property name="text">
+                <string>College</string>
+            </property>
+            </item>
+            <item>
+            <property name="text">
+                <string>Code</string>
+            </property>
+            </item>
+            </widget>
+            </item>
+             <item>
               <widget class="QPushButton" name="addCollegeButton">
                <property name="minimumSize">
                 <size>

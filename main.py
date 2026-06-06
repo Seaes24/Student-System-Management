@@ -726,6 +726,7 @@ class MainWindow(QMainWindow):
 
         self.sortComboBox_2.currentTextChanged.connect(self.sort_students_by_dropdown)
         self.sortComboBox_3.currentTextChanged.connect(self.sort_programs_by_dropdown)
+        self.sortComboBox_4.currentTextChanged.connect(self.sort_colleges_by_dropdown)
 
         self.searchLineEdit_2.textChanged.connect(self.search_students)
         self.searchLineEdit_3.textChanged.connect(self.search_programs)
@@ -998,16 +999,14 @@ class MainWindow(QMainWindow):
 
     # ============ College Operations ============
     def sort_colleges_by_dropdown(self, sort_by):
-        print(f"COLLEGE SORT CALLED: {sort_by}")
-        print(f"all_colleges count: {len(self.all_colleges)}")
-
-        sort_mapping = { 
-            'College': 'name',   
+        sort_mapping = {
+            'College': 'name',
+            'Code': 'code',
         }
 
         key = sort_mapping.get(sort_by)
         if key:
-            self.all_colleges.sort(key=lambda s: s.get(key, '').lower())
+            self.all_colleges.sort(key=lambda c: c.get(key, '').lower())
             self.colleges_page = 1
             self.load_colleges_table(refresh=False)
 
@@ -1028,8 +1027,7 @@ class MainWindow(QMainWindow):
         
         if refresh:
             self.all_colleges = self.db_manager.get_all_colleges()
-        
-        self.all_colleges.sort(key=lambda c: c.get('name', '').lower())
+            self.all_colleges.sort(key=lambda c: c.get('name', '').lower())
 
         search_text = self.current_colleges_search_text.lower().strip()
         if search_text:
