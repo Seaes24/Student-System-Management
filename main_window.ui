@@ -1132,7 +1132,7 @@ QPushButton:disabled {
                         <width>150</width>
                         <height>40</height>
                     </size>
-                </property>
+                    </property>
             <item>
             <property name="text">
                 <string>College</string>
